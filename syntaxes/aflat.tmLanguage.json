@@ -10,6 +10,9 @@
 		},
 		{
 			"include": "oporators"
+		},
+		{
+			"include": "function"
 		}
 	],
 	"repository": {
@@ -32,12 +35,6 @@
 					"match": "\\\\."
 				}
 			]
-		},
-		"oporator":{
-			"patterns": [{
-				"name": "keyword.operator.aflat",
-				"match": "\b(=|==|!=|<<|>>|<|>|&|\\|\\|)\\b"
-			}]
 		}
 	},
 	"scopeName": "source.aflat"
