@@ -7,13 +7,19 @@
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "oporators"
 		}
 	],
 	"repository": {
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\\b(if|while|for|return)\\b"
+				"match": "\b(if|while|push|pull|as|return)\\b"
+			},{
+				"name": "keyword.dataType.aflat",
+				"match": "\b(int|float|char|string|byte)\\b"
 			}]
 		},
 		"strings": {
@@ -26,6 +32,12 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"oporator":{
+			"patterns": [{
+				"name": "keyword.operator.aflat",
+				"match": "\b(=|==|!=|<<|>>|<|>|&|\\|\\|)\\b"
+			}]
 		}
 	},
 	"scopeName": "source.aflat"
