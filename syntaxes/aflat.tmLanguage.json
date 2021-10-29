@@ -9,20 +9,20 @@
 			"include": "#strings"
 		},
 		{
-			"include": "oporators"
+			"include": "#comment"
 		},
 		{
-			"include": "function"
+			"include": "#function"
+		},
+		{
+			"include": "#slcomment"
 		}
 	],
 	"repository": {
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\b(if|while|push|pull|as|return)\\b"
-			},{
-				"name": "keyword.dataType.aflat",
-				"match": "\b(int|float|char|string|byte)\\b"
+				"match": "\\b(if|while|class|struct|int|as|adr|char|float|return)\\b"
 			}]
 		},
 		"strings": {
@@ -35,6 +35,19 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"comment":{
+			"name":"comment.block",
+			"begin":"\\/\\*",
+			"end":"\\*\\/"
+		},
+		"functoin":{
+			"name":"function.aflat",
+			"match": "\\b(fn|def)\\b"
+		},
+		"#slcomment":{
+			"name": "comment.line.double-slash",
+			"match": "\\/\\/.+"
 		}
 	},
 	"scopeName": "source.aflat"
