@@ -1,0 +1,25 @@
+{
+    "name": "aflat",
+    "displayName": "AFlat",
+    "description": "A VS Code Extention for an AFlat Project",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.61.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "aflat",
+            "aliases": ["AFlat", "aflat"],
+            "extensions": [".af",".gs"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "aflat",
+            "scopeName": "source.aflat",
+            "path": "./syntaxes/aflat.tmLanguage.json"
+        }]
+    }
+}
