@@ -12,10 +12,19 @@
 			"include": "#comment"
 		},
 		{
+			"include": "#class"
+		},
+		{
 			"include": "#function"
 		},
 		{
 			"include": "#slcomment"
+		},
+		{
+			"include": "#char"
+		},
+		{
+			"include": "#operators"
 		}
 	],
 	"repository": {
@@ -36,18 +45,44 @@
 				}
 			]
 		},
+		"char": {
+			"name":"string.quoted.single",
+			"begin":"'",
+			"end":"'",
+			"patterns": [
+				{
+					"name": "constant.character.escape.aflat",
+					"match": "\\\\."
+				}
+			]
+
+		},
 		"comment":{
 			"name":"comment.block",
 			"begin":"\\/\\*",
 			"end":"\\*\\/"
 		},
-		"functoin":{
-			"name":"function.aflat",
-			"match": "\\b(fn|def)\\b"
-		},
-		"#slcomment":{
+		"slcomment":{
 			"name": "comment.line.double-slash",
-			"match": "\\/\\/.+"
+			"match": "\\/\\/[^\\n]*"
+		},
+		"function": {
+			"patterns": [{
+				"name": "entity.name.function.aflat",
+				"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+			}]
+		},
+		"class": {
+			"patterns": [{
+				"name": "entity.name.type.class.aflat",
+				"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+			}]
+		},
+		"oporators" :{
+			"patterns": [{
+				"name": "keyword.operator.arithmetic.aflat",
+				"match": "\\+|\\-|\\*|\\/|\\%|\\=|\\<|\\>|\\?"
+			}]
 		}
 	},
 	"scopeName": "source.aflat"
