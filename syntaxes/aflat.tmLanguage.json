@@ -12,6 +12,9 @@
 			"include": "#comment"
 		},
 		{
+			"incluse": "#carrot"
+		},
+		{
 			"include": "#class"
 		},
 		{
@@ -22,16 +25,17 @@
 		},
 		{
 			"include": "#char"
-		},
-		{
-			"include": "#operators"
 		}
 	],
 	"repository": {
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\\b(if|while|class|struct|int|as|adr|char|float|return)\\b"
+				"match": "\\b(if|while|class|struct|int|as|adr|char|float|else|short|public|private|return)\\b"
+			},
+			{
+				"name": "keyword.operator.aflat",
+				"match": "\\b(\\+|\\-|\\*|\\/|\\?|\\#|\\<|\\>|\\=)\\b"
 			}]
 		},
 		"strings": {
@@ -44,6 +48,11 @@
 					"match": "\\\\."
 				}
 			]
+		},
+		"carrot": {
+			"name": "string.quoted.double.aflat",
+			"begin": ".needs <",
+			"end": ">"
 		},
 		"char": {
 			"name":"string.quoted.single",
@@ -76,12 +85,6 @@
 			"patterns": [{
 				"name": "entity.name.type.class.aflat",
 				"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
-			}]
-		},
-		"oporators" :{
-			"patterns": [{
-				"name": "keyword.operator.arithmetic.aflat",
-				"match": "\\+|\\-|\\*|\\/|\\%|\\=|\\<|\\>|\\?"
 			}]
 		}
 	},
