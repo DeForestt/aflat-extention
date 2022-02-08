@@ -10,16 +10,29 @@
         "Programming Languages"
     ],
     "contributes": {
-        "languages": [{
-            "id": "aflat",
-            "aliases": ["AFlat", "aflat"],
-            "extensions": [".af",".gs"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "aflat",
-            "scopeName": "source.aflat",
-            "path": "./syntaxes/aflat.tmLanguage.json"
-        }]
+        "languages": [
+            {
+                "id": "aflat",
+                "aliases": [
+                    "AFlat",
+                    "aflat"
+                ],
+                "extensions": [
+                    ".af",
+                    ".gs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "aflat",
+                "scopeName": "source.aflat",
+                "path": "./syntaxes/aflat.tmLanguage.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "typescript": "^4.5.5"
     }
 }
