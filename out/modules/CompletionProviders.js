@@ -14,7 +14,8 @@ const reservedWords = [
     "while",
     "for",
     "public",
-    "private"
+    "private",
+    "class",
 ];
 const keywords = vscode.languages.registerCompletionItemProvider('aflat', {
     provideCompletionItems(document, position, token, context) {
@@ -26,6 +27,8 @@ const keywords = vscode.languages.registerCompletionItemProvider('aflat', {
 });
 const functions = vscode.languages.registerCompletionItemProvider('aflat', {
     provideCompletionItems(document, position, token, context) {
+        // parse the document
+        const documentText = document.getText();
         return [];
     }
     // scroll through all of the text in the document
