@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getSymbols } from './ParseAflat';
 
 const reservedWords : string[] = [
     "int",
@@ -26,19 +27,19 @@ const keywords : vscode.Disposable = vscode.languages.registerCompletionItemProv
     }
 });
 
-const functions : vscode.Disposable = vscode.languages.registerCompletionItemProvider('aflat', {
+const symbols : vscode.Disposable = vscode.languages.registerCompletionItemProvider('aflat', {
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
         
         // parse the document
         const documentText = document.getText();
+        const symbols = getSymbols(documentText);
         
-        
-        return [];
+        return symbols.map(x => new vscode.CompletionItem(x));
     }
     // scroll through all of the text in the document
 
 })
 
 export const providers : vscode.Disposable[] = [
-   keywords
+   keywords, symbols
 ];

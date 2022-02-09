@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.providers = void 0;
 const vscode = require("vscode");
+const ParseAflat_1 = require("./ParseAflat");
 const reservedWords = [
     "int",
     "float",
@@ -25,14 +26,15 @@ const keywords = vscode.languages.registerCompletionItemProvider('aflat', {
         return reservedWords.map(x => new vscode.CompletionItem(x));
     }
 });
-const functions = vscode.languages.registerCompletionItemProvider('aflat', {
+const symbols = vscode.languages.registerCompletionItemProvider('aflat', {
     provideCompletionItems(document, position, token, context) {
         // parse the document
         const documentText = document.getText();
-        return [];
+        const symbols = (0, ParseAflat_1.getSymbols)(documentText);
+        return symbols.map(x => new vscode.CompletionItem(x));
     }
     // scroll through all of the text in the document
 });
 exports.providers = [
-    keywords
+    keywords, symbols
 ];
