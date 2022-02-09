@@ -1,6 +1,8 @@
-import * as vscode from 'vscode';
-
-const reservedWords : string[] = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.providers = void 0;
+const vscode = require("vscode");
+const reservedWords = [
     "int",
     "float",
     "adr",
@@ -13,18 +15,15 @@ const reservedWords : string[] = [
     "for",
     "public",
     "private"
-]
-
-const keywords : vscode.Disposable = vscode.languages.registerCompletionItemProvider('aflat', {
-    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+];
+const keywords = vscode.languages.registerCompletionItemProvider('aflat', {
+    provideCompletionItems(document, position, token, context) {
         // Get the word at the current position
         const word = document.getText(document.getWordRangeAtPosition(position));
-
         // Return the completion item
         return reservedWords.map(x => new vscode.CompletionItem(x));
     }
 });
-
-export const providers : vscode.Disposable[] = [
-   keywords
+exports.providers = [
+    keywords
 ];
