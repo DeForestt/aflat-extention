@@ -12,7 +12,8 @@ const reservedWords : string[] = [
     "while",
     "for",
     "public",
-    "private"
+    "private",
+    "class",
 ]
 
 const keywords : vscode.Disposable = vscode.languages.registerCompletionItemProvider('aflat', {
