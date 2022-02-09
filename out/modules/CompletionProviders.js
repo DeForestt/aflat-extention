@@ -24,6 +24,12 @@ const keywords = vscode.languages.registerCompletionItemProvider('aflat', {
         return reservedWords.map(x => new vscode.CompletionItem(x));
     }
 });
+const functions = vscode.languages.registerCompletionItemProvider('aflat', {
+    provideCompletionItems(document, position, token, context) {
+        return [];
+    }
+    // scroll through all of the text in the document
+});
 exports.providers = [
     keywords
 ];

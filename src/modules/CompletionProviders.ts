@@ -25,6 +25,19 @@ const keywords : vscode.Disposable = vscode.languages.registerCompletionItemProv
     }
 });
 
+const functions : vscode.Disposable = vscode.languages.registerCompletionItemProvider('aflat', {
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+        
+        // parse the document
+        const documentText = document.getText();
+        
+        
+        return [];
+    }
+    // scroll through all of the text in the document
+
+})
+
 export const providers : vscode.Disposable[] = [
    keywords
 ];
