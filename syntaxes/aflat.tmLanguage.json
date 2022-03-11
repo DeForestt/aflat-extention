@@ -31,7 +31,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\\b(if|while|class|struct|int|as|adr|char|float|else|short|public|private|return)\\b"
+				"match": "\\b(if|while|class|struct|int|as|adr|char|float|else|short|public|private|return|new)\\b"
 			},
 			{
 				"name": "keyword.operator.aflat",
