@@ -6,13 +6,13 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#preprocessor"
+		},
+		{
 			"include": "#strings"
 		},
 		{
 			"include": "#comment"
-		},
-		{
-			"incluse": "#carrot"
 		},
 		{
 			"include": "#class"
@@ -31,11 +31,15 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\\b(if|while|class|struct|else|public|private|return|new)\\b"
+				"match": "\\b(if|while|for|class|struct|else|return|new|as)\\b"
 			},
 			{
-				"name": "keyword.other",
-				"match": "\\b(int|as|adr|char|float|bool|short)\\b"
+				"name":"storage.modifier.aflat",
+				"match": "\\b(public|private|static)\\b"
+			},
+			{
+				"name":"storage.type.aflat",
+				"match": "\\b(int|adr|char|float|bool|short)\\b"
 			},
 			{
 				"name": "variable",
@@ -57,11 +61,6 @@
 				}
 			]
 		},
-		"carrot": {
-			"name": "string.quoted.double.aflat",
-			"begin": ".needs <",
-			"end": ">"
-		},
 		"char": {
 			"name":"string.quoted.single",
 			"begin":"'",
@@ -79,19 +78,17 @@
 			"begin":"\\/\\*",
 			"end":"\\*\\/"
 		},
+		"preprocessor":{
+			"name":"meta.preprocessor.string",
+			"match": "\\b(needs|root)\\b"
+		},
 		"slcomment":{
 			"name": "comment.line.double-slash",
 			"match": "\\/\\/[^\\n]*"
 		},
 		"function": {
 			"patterns": [{
-				"name": "entity.name.function.aflat",
-				"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
-			}]
-		},
-		"class": {
-			"patterns": [{
-				"name": "entity.name.type.class.aflat",
+				"name": "entity.name.class.aflat",
 				"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
 			}]
 		}
