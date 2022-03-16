@@ -9,10 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSets = exports.deactivate = exports.activate = void 0;
+exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
+const Parser_1 = require("./modules/Parser");
 const tokenTypes = new Map();
 const tokenModifiers = new Map();
 const legend = (function () {
@@ -61,7 +62,7 @@ class DocumentSemanticTokenProvidor {
         return __awaiter(this, void 0, void 0, function* () {
             const r = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = getSets(text);
+            const names = (0, Parser_1.default)(text);
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
@@ -85,7 +86,7 @@ class DocumentSemanticTokenProvidor {
                         const uri = path.join(cwd, rootDir, needsDir);
                         if (fs.existsSync(uri)) {
                             const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                            const needsNameSets = getSets(needsFile.toString());
+                            const needsNameSets = (0, Parser_1.default)(needsFile.toString());
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -119,7 +120,7 @@ class DocumentSemanticTokenProvidor {
                             // check if file exists
                             if (fs.existsSync(uri)) {
                                 const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-                                const needsNameSets = getSets(needsFile.toString());
+                                const needsNameSets = (0, Parser_1.default)(needsFile.toString());
                                 typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                                 functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                                 variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -325,65 +326,3 @@ exports.activate = activate;
 function deactivate() { }
 exports.deactivate = deactivate;
 ;
-function getSets(text) {
-    const typeNames = new Set();
-    const functionNames = new Set();
-    const variableNames = new Set();
-    const lines = text.split('\n');
-    const prelines = text.split(/\r\n|\r|\n/);
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // search the line a variable declaration
-        const variableDeclaration = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*=\s*(.*)/);
-        if (variableDeclaration) {
-            const variableName = variableDeclaration[1];
-            // add the variable name to list of known variables
-            variableNames.add(variableName);
-        }
-        // match a variable declaration without a value
-        const variableDeclarationWithoutValue = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(;|\]|\)|\,)/);
-        if (variableDeclarationWithoutValue) {
-            const variableName = variableDeclarationWithoutValue[1];
-            // add the variable name to list of known variables
-            variableNames.add(variableName);
-        }
-        // search the line a class declaration
-        const classDeclaration = line.match(/(?:class)\s+([\w\d_]+)\s*/);
-        if (classDeclaration) {
-            const className = classDeclaration[1];
-            // add the class name to list of known classes
-            typeNames.add(className);
-        }
-        // search the line a function declaration ie int foo(int a, int b)
-        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*\(([\w\d_\s,]*)\)/);
-        if (functionDeclaration) {
-            const functionName = functionDeclaration[1];
-            const functionArguments = functionDeclaration[2].split(',');
-            // add the function name to list of known functions
-            functionNames.add(functionName);
-        }
-        ;
-        // search the line for variable declarations with a type
-        for (const typeName of typeNames) {
-            const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
-            if (variableDeclaration) {
-                const variableName = variableDeclaration[1];
-                // add the variable name to list of known variables
-                variableNames.add(variableName);
-            }
-        }
-        // search the line for function declarations with a type
-        for (const typeName of typeNames) {
-            const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
-            if (functionDeclaration) {
-                const functionName = functionDeclaration[1];
-                const functionArguments = functionDeclaration[2].split(',');
-                // add the function name to list of known functions
-                functionNames.add(functionName);
-            }
-        }
-    }
-    // return the sets
-    return { typeNames, functionNames, variableNames };
-}
-exports.getSets = getSets;
