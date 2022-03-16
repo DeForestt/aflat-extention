@@ -92,7 +92,7 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 			// match .needs "dir"
 			const needsDirMatch = prelines[i].match(/.needs\s+"([^"]+)"/);
 			if (needsDirMatch) {
-				const needsDir = needsDirMatch[1] + '.gs';
+				const needsDir = (needsDirMatch[1].endsWith('.gs')) ? needsDirMatch[1] :  needsDirMatch[1] + '.gs';
 				// read the file
 				const work = vscode.workspace.workspaceFolders
 				if (work !== undefined) {
@@ -118,7 +118,7 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 					const libPath = '/home/dthompson/Repos/aflat/libraries/std/head';
 					//console.log(libPath);
 					if (typeof libPath === 'string') {
-						const needsDir = needsDirMatch2[1] + '.gs';
+						const needsDir = (needsDirMatch2[1].endsWith('.gs')) ? needsDirMatch2[1] :  needsDirMatch2[1] + '.gs';
 						const uri = path.join(libPath, rootDir, needsDir);
 						console.log(uri);
 						const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
@@ -137,58 +137,6 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-
-			// search the line for strings in the variable list
-			for(let word  of variableNames) {
-				if (line.indexOf(word) >= 0) {
-					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-							r.push({
-								line: i,
-								startCharacter: line.indexOf(word),
-								length: word.length,
-								tokenType: 'variable',
-								tokenModifiers: []
-							});
-						}
-					}
-				}
-			}
-
-			// search the line for strings in the class list
-			for(let word  of typeNames) {
-				if (line.indexOf(word) >= 0) {
-					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-							r.push({
-								line: i,
-								startCharacter: line.indexOf(word),
-								length: word.length,
-								tokenType: 'class',
-								tokenModifiers: []
-							});
-						}
-					}
-				}
-			};
-
-			// search the line for strings in the function list
-			for(let word  of functionNames) {
-				if (line.indexOf(word) >= 0) {
-					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-							r.push({
-								line: i,
-								startCharacter: line.indexOf(word),
-								length: word.length,
-								tokenType: 'function',
-								tokenModifiers: []
-							});
-						}
-					}
-				}
-			};
-			
 
 			// check for double quoted strings
 			const doubleQuoteMatch = line.match(/"([^"]*)"/);
@@ -250,6 +198,83 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 					tokenModifiers: []
 				});
 			}
+
+			// search the line for variable declarations with a type
+			for (const typeName of typeNames) {
+				const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
+				if (variableDeclaration) {
+					console.log(`found variable declaration with type ${typeName}`);
+					const variableName = variableDeclaration[1];
+
+
+					// add the variable name to list of known variables
+					variableNames.add(variableName);
+				}
+			}
+
+			// search the line for function declarations with a type
+			for (const typeName of typeNames) {
+				const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
+				if (functionDeclaration) {
+					console.log(`found function declaration with type ${typeName}`);
+					const functionName = functionDeclaration[1];
+					const functionArguments = functionDeclaration[2].split(',');
+
+					// add the function name to list of known functions
+					functionNames.add(functionName);
+				}
+			}
+
+			// search the line for strings in the variable list
+			for(let word  of variableNames) {
+				if (line.indexOf(word) >= 0) {
+					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
+						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
+							r.push({
+								line: i,
+								startCharacter: line.indexOf(word),
+								length: word.length,
+								tokenType: 'variable',
+								tokenModifiers: []
+							});
+						}
+					}
+				}
+			}
+
+			// search the line for strings in the class list
+			for(let word  of typeNames) {
+				if (line.indexOf(word) >= 0) {
+					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
+						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
+							r.push({
+								line: i,
+								startCharacter: line.indexOf(word),
+								length: word.length,
+								tokenType: 'class',
+								tokenModifiers: []
+							});
+						}
+					}
+				}
+			};
+
+			// search the line for strings in the function list
+			for(let word  of functionNames) {
+				if (line.indexOf(word) >= 0) {
+					if ( line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
+						if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
+							r.push({
+								line: i,
+								startCharacter: line.indexOf(word),
+								length: word.length,
+								tokenType: 'function',
+								tokenModifiers: []
+							});
+						}
+					}
+				}
+			};
 		}
 		return r;
     }
@@ -316,7 +341,6 @@ export function getSets(text : string) : NameSets{
 		for (const typeName of typeNames) {
 			const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
 			if (variableDeclaration) {
-				console.log(`found variable declaration with type ${typeName}`);
 				const variableName = variableDeclaration[1];
 
 
@@ -329,7 +353,6 @@ export function getSets(text : string) : NameSets{
 		for (const typeName of typeNames) {
 			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
 			if (functionDeclaration) {
-				console.log(`found function declaration with type ${typeName}`);
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
 
