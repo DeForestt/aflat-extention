@@ -53,6 +53,13 @@ const getSets = (text : string) : NameSets =>{
 			functionNames.add(functionName);
 		};
 
+		// search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
+		const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(?:<<.>>)\s*([\w\d_]+)\s*\(([\w\d_\s,]*)\)/);
+		if (opOverloadFunctionDeclaration) {
+			const functionName = opOverloadFunctionDeclaration[1];
+			functionNames.add(functionName);
+		}	
+
 
 		// search the line for variable declarations with a type
 		for (const typeName of typeNames) {
