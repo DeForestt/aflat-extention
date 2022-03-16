@@ -4,7 +4,9 @@ exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
 const SemanticTokenizer_1 = require("./modules/SemanticTokenizer");
 function activate(context) {
-    context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider({ language: 'aflat' }, new SemanticTokenizer_1.DocumentSemanticTokenProvidor(), SemanticTokenizer_1.legend));
+    const TokenDiagnositcs = vscode.languages.createDiagnosticCollection('SemanticTokenizer');
+    context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider({ language: 'aflat' }, new SemanticTokenizer_1.DocumentSemanticTokenProvidor(TokenDiagnositcs), SemanticTokenizer_1.legend));
+    context.subscriptions.push(TokenDiagnositcs);
 }
 exports.activate = activate;
 ;

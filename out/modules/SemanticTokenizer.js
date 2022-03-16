@@ -29,6 +29,11 @@ exports.legend = (function () {
     return new vscode.SemanticTokensLegend(tokenTypesLegend, tokenModifiersLegend);
 })();
 class DocumentSemanticTokenProvidor {
+    constructor(TokenDiagnostics) {
+        this.diagnosticList = [];
+        this.TokenDiagnositcs = TokenDiagnostics;
+        TokenDiagnostics.clear();
+    }
     provideDocumentSemanticTokens(document, token) {
         return __awaiter(this, void 0, void 0, function* () {
             const allTokens = yield this._parseText(document.getText());
@@ -36,6 +41,8 @@ class DocumentSemanticTokenProvidor {
             allTokens.forEach((token) => {
                 builder.push(token.line, token.startCharacter, token.length, this._encodeTokenType(token.tokenType), this._encodeTokenModifiers(token.tokenModifiers));
             });
+            // set the diagnostics
+            this.TokenDiagnositcs.set(document.uri, this.diagnosticList);
             return builder.build();
         });
     }
@@ -61,6 +68,7 @@ class DocumentSemanticTokenProvidor {
     _parseText(text) {
         return __awaiter(this, void 0, void 0, function* () {
             const r = [];
+            this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
             const names = (0, Parser_1.default)(text);
             let typeNames = names.typeNames;
@@ -92,14 +100,9 @@ class DocumentSemanticTokenProvidor {
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
                         }
                         else {
-                            vscode.window.showErrorMessage(`${uri} does not exist`);
-                            r.push({
-                                line: i,
-                                startCharacter: 0,
-                                length: prelines[i].length,
-                                tokenType: 'error',
-                                tokenModifiers: []
-                            });
+                            // add Diagnostic
+                            let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                            this.diagnosticList.push(diag);
                         }
                     }
                     else {
@@ -128,13 +131,8 @@ class DocumentSemanticTokenProvidor {
                             else {
                                 vscode.window.showErrorMessage('File not found: ' + uri);
                                 //add error token
-                                r.push({
-                                    line: i,
-                                    startCharacter: 0,
-                                    length: prelines[i].length,
-                                    tokenType: 'error',
-                                    tokenModifiers: []
-                                });
+                                let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                                this.diagnosticList.push(diag);
                             }
                         }
                     }

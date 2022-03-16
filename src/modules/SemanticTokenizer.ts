@@ -32,12 +32,22 @@ interface IParsedToken {
 
 export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProvider {
 
+	diagnosticList : vscode.Diagnostic[] = [];
+	TokenDiagnositcs : vscode.DiagnosticCollection;
+
+	constructor(TokenDiagnostics : vscode.DiagnosticCollection) {
+		this.TokenDiagnositcs = TokenDiagnostics;
+		TokenDiagnostics.clear();
+	}
+
     async provideDocumentSemanticTokens(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.SemanticTokens> {
 		const allTokens : IParsedToken[] = await this._parseText(document.getText());
 		const builder = new vscode.SemanticTokensBuilder();
 		allTokens.forEach((token : IParsedToken) => {
 			builder.push(token.line, token.startCharacter, token.length, this._encodeTokenType(token.tokenType), this._encodeTokenModifiers(token.tokenModifiers));
 		});
+		// set the diagnostics
+		this.TokenDiagnositcs.set(document.uri, this.diagnosticList);
 		return builder.build();
 	}
 
@@ -63,6 +73,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 
     private async _parseText(text: string): Promise<IParsedToken[]> {
         const r: IParsedToken[] = [];
+		this.diagnosticList = [];
 		const prelines = text.split(/\r\n|\r|\n/);
 		
 		const names = getSets(text);
@@ -101,15 +112,13 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
 				} else { 
-					vscode.window.showErrorMessage(`${uri} does not exist`);
-					
-					r.push({
-					line: i,
-					startCharacter: 0,
-					length: prelines[i].length,
-					tokenType: 'error',
-					tokenModifiers: []
-					});
+					// add Diagnostic
+					let diag : vscode.Diagnostic = new vscode.Diagnostic(
+						new vscode.Range(
+							new vscode.Position(i, 0),
+							new vscode.Position(i, prelines[i].length)),
+							`${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+					this.diagnosticList.push(diag);
 				}
 				} else {
 					vscode.window.showErrorMessage('No workspace found');
@@ -137,13 +146,12 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 						} else {
 							vscode.window.showErrorMessage('File not found: ' + uri);
 							//add error token
-							r.push({
-								line: i,
-								startCharacter: 0,
-								length: prelines[i].length,
-								tokenType: 'error',
-								tokenModifiers: []
-							});
+							let diag : vscode.Diagnostic = new vscode.Diagnostic(
+								new vscode.Range(
+									new vscode.Position(i, 0),
+									new vscode.Position(i, prelines[i].length)),
+									`${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+							this.diagnosticList.push(diag);
 						}
 					}
 				}
