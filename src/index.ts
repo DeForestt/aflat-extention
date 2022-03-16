@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 import { Console } from 'console';
 import { stringify } from 'querystring';
@@ -8,7 +9,7 @@ const tokenModifiers = new Map<string, number>();
 
 const legend = (function () {
 	const tokenTypesLegend = [
-		'variable', 'class', 'function', 'string'
+		'variable', 'class', 'function', 'string', 'error'
 	];
 	tokenTypesLegend.forEach((tokenType, index) => tokenTypes.set(tokenType, index));
 
@@ -99,12 +100,24 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 				if (work !== undefined) {
 				const cwd = work[0].uri.fsPath;
 				const uri = path.join(cwd, rootDir, needsDir);
-
+				
+				if (fs.existsSync(uri)){
 				const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
 				const needsNameSets = getSets(needsFile.toString());
 				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+				} else { 
+					vscode.window.showErrorMessage(`${uri} does not exist`);
+					
+					r.push({
+					line: i,
+					startCharacter: 0,
+					length: prelines[i].length,
+					tokenType: 'error',
+					tokenModifiers: []
+					});
+				}
 				} else {
 					vscode.window.showErrorMessage('No workspace found');
 				}
@@ -115,17 +128,30 @@ class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTokensProv
 			if (needsDirMatch2) {
 				// read libpath from .vscode/settings.json
 				if (vscode.workspace.workspaceFolders !== undefined) {
-					const config = vscode.workspace.getConfiguration('Aflat', vscode.workspace.workspaceFolders[0].uri);
-					const libPath = '/home/dthompson/Repos/aflat/libraries/std/head';
+					const config = vscode.workspace.getConfiguration('aflat');
+					const libPath = config.get('stddir');
 					//console.log(libPath);
 					if (typeof libPath === 'string') {
 						const needsDir = (needsDirMatch2[1].endsWith('.gs')) ? needsDirMatch2[1] :  needsDirMatch2[1] + '.gs';
-						const uri = path.join(libPath, rootDir, needsDir);
+						const uri = path.join(libPath, needsDir);
+						// check if file exists
+						if (fs.existsSync(uri)) {
 						const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
 						const needsNameSets = getSets(needsFile.toString());
 						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+						} else {
+							vscode.window.showErrorMessage('File not found: ' + uri);
+							//add error token
+							r.push({
+								line: i,
+								startCharacter: 0,
+								length: prelines[i].length,
+								tokenType: 'error',
+								tokenModifiers: []
+							});
+						}
 					}
 				}
 				else {
