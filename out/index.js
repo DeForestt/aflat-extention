@@ -103,7 +103,6 @@ class DocumentSemanticTokenProvidor {
                         if (typeof libPath === 'string') {
                             const needsDir = (needsDirMatch2[1].endsWith('.gs')) ? needsDirMatch2[1] : needsDirMatch2[1] + '.gs';
                             const uri = path.join(libPath, rootDir, needsDir);
-                            console.log(uri);
                             const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
                             const needsNameSets = getSets(needsFile.toString());
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
@@ -118,68 +117,58 @@ class DocumentSemanticTokenProvidor {
             }
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
+                const streingRanges = new Set();
                 // check for double quoted strings
                 const doubleQuoteMatch = line.match(/"([^"]*)"/);
                 if (doubleQuoteMatch) {
-                    r.push({
-                        line: i,
-                        startCharacter: line.indexOf(doubleQuoteMatch[0]),
-                        length: doubleQuoteMatch[0].length,
-                        tokenType: 'string',
-                        tokenModifiers: []
-                    });
+                    for (const match of doubleQuoteMatch) {
+                        streingRanges.add({
+                            start: line.indexOf(match),
+                            end: line.indexOf(match) + match.length
+                        });
+                    }
+                    ;
                 }
                 ;
                 // check for <>
                 const angleBracketMatch = line.match(/<([^>]*)>/);
                 if (angleBracketMatch) {
-                    r.push({
-                        line: i,
-                        startCharacter: line.indexOf(angleBracketMatch[0]),
-                        length: angleBracketMatch[0].length,
-                        tokenType: 'string',
-                        tokenModifiers: []
+                    let angleBracketString = angleBracketMatch[1];
+                    streingRanges.add({
+                        start: line.indexOf(angleBracketString),
+                        end: line.indexOf(angleBracketString) + angleBracketString.length
                     });
                 }
                 // check for single quoted strings
                 const singleQuoteMatch = line.match(/'([^']*)'/);
                 if (singleQuoteMatch) {
-                    r.push({
-                        line: i,
-                        startCharacter: line.indexOf(singleQuoteMatch[0]),
-                        length: singleQuoteMatch[0].length,
-                        tokenType: 'string',
-                        tokenModifiers: []
+                    let singleQuoteString = singleQuoteMatch[1];
+                    streingRanges.add({
+                        start: line.indexOf(singleQuoteString),
+                        end: line.indexOf(singleQuoteString) + singleQuoteString.length
                     });
                 }
                 // check for // comments
                 const commentMatch = line.match(/\/\/(.*)/);
                 if (commentMatch) {
-                    r.push({
-                        line: i,
-                        startCharacter: line.indexOf(commentMatch[0]),
-                        length: commentMatch[0].length,
-                        tokenType: 'comment',
-                        tokenModifiers: []
+                    streingRanges.add({
+                        start: line.indexOf(commentMatch[1]),
+                        end: line.length - 1
                     });
                 }
                 ;
                 // check for /* comments
                 const commentMatch2 = line.match(/\/\*(.*)\*\//);
                 if (commentMatch2) {
-                    r.push({
-                        line: i,
-                        startCharacter: line.indexOf(commentMatch2[0]),
-                        length: commentMatch2[0].length,
-                        tokenType: 'comment',
-                        tokenModifiers: []
+                    streingRanges.add({
+                        start: line.indexOf(commentMatch2[1]),
+                        end: line.indexOf(commentMatch2[1]) + commentMatch2[1].length
                     });
                 }
                 // search the line for variable declarations with a type
                 for (const typeName of typeNames) {
                     const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
                     if (variableDeclaration) {
-                        console.log(`found variable declaration with type ${typeName}`);
                         const variableName = variableDeclaration[1];
                         // add the variable name to list of known variables
                         variableNames.add(variableName);
@@ -189,7 +178,6 @@ class DocumentSemanticTokenProvidor {
                 for (const typeName of typeNames) {
                     const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
                     if (functionDeclaration) {
-                        console.log(`found function declaration with type ${typeName}`);
                         const functionName = functionDeclaration[1];
                         const functionArguments = functionDeclaration[2].split(',');
                         // add the function name to list of known functions
@@ -198,51 +186,102 @@ class DocumentSemanticTokenProvidor {
                 }
                 // search the line for strings in the variable list
                 for (let word of variableNames) {
-                    if (line.indexOf(word) >= 0) {
-                        if (line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-                            if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-                                r.push({
-                                    line: i,
-                                    startCharacter: line.indexOf(word),
-                                    length: word.length,
-                                    tokenType: 'variable',
-                                    tokenModifiers: []
-                                });
+                    // sliding window search for word
+                    let start = 0;
+                    let end = word.length;
+                    while (end < line.length) {
+                        const window = line.substring(start, end);
+                        if (window === word) {
+                            if (start === 0 || !/[a-zA-Z0-9_]/.test(line[start - 1])) {
+                                if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
+                                    // check if the word is in a string
+                                    let inString = false;
+                                    for (const range of streingRanges) {
+                                        if (range.start <= start && range.end >= start) {
+                                            inString = true;
+                                        }
+                                    }
+                                    ;
+                                    if (!inString)
+                                        r.push({
+                                            line: i,
+                                            startCharacter: start,
+                                            length: word.length,
+                                            tokenType: 'variable',
+                                            tokenModifiers: []
+                                        });
+                                }
                             }
                         }
+                        start++;
+                        end++;
                     }
                 }
                 // search the line for strings in the class list
                 for (let word of typeNames) {
-                    if (line.indexOf(word) >= 0) {
-                        if (line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-                            if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-                                r.push({
-                                    line: i,
-                                    startCharacter: line.indexOf(word),
-                                    length: word.length,
-                                    tokenType: 'class',
-                                    tokenModifiers: []
-                                });
+                    // sliding window search for word
+                    let start = 0;
+                    let end = word.length;
+                    while (end < line.length) {
+                        const window = line.substring(start, end);
+                        if (window === word) {
+                            if (start === 0 || !/[a-zA-Z0-9_]/.test(line[start - 1])) {
+                                if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
+                                    // check if the word is in a string
+                                    let inString = false;
+                                    for (const range of streingRanges) {
+                                        if (range.start <= start && range.end >= start) {
+                                            inString = true;
+                                        }
+                                    }
+                                    ;
+                                    if (!inString)
+                                        r.push({
+                                            line: i,
+                                            startCharacter: start,
+                                            length: word.length,
+                                            tokenType: 'class',
+                                            tokenModifiers: []
+                                        });
+                                }
                             }
                         }
+                        start++;
+                        end++;
                     }
                 }
                 ;
                 // search the line for strings in the function list
                 for (let word of functionNames) {
-                    if (line.indexOf(word) >= 0) {
-                        if (line.indexOf(word) === 0 || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) - 1])) {
-                            if (line.indexOf(word) + word.length === line.length || !/[a-zA-Z0-9_]/.test(line[line.indexOf(word) + word.length])) {
-                                r.push({
-                                    line: i,
-                                    startCharacter: line.indexOf(word),
-                                    length: word.length,
-                                    tokenType: 'function',
-                                    tokenModifiers: []
-                                });
+                    // sliding window search for word
+                    let start = 0;
+                    let end = word.length;
+                    while (end < line.length) {
+                        const window = line.substring(start, end);
+                        if (window === word) {
+                            if (start === 0 || !/[a-zA-Z0-9_]/.test(line[start - 1])) {
+                                if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
+                                    // check if the word is in a string
+                                    let inString = false;
+                                    for (const range of streingRanges) {
+                                        if (range.start <= start && range.end >= start) {
+                                            inString = true;
+                                        }
+                                    }
+                                    ;
+                                    if (!inString)
+                                        r.push({
+                                            line: i,
+                                            startCharacter: start,
+                                            length: word.length,
+                                            tokenType: 'function',
+                                            tokenModifiers: []
+                                        });
+                                }
                             }
                         }
+                        start++;
+                        end++;
                     }
                 }
                 ;
