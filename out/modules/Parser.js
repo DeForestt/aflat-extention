@@ -30,7 +30,7 @@ const getSets = (text) => {
             typeNames.add(className);
         }
         // search the line a function declaration ie int foo(int a, int b)
-        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*\(([\w\d_\s,]*)\)/);
+        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte)\s+([\w\d_]+)\s*\(([\w\d_\s,]*)\)/);
         if (functionDeclaration) {
             const functionName = functionDeclaration[1];
             const functionArguments = functionDeclaration[2].split(',');
@@ -38,6 +38,12 @@ const getSets = (text) => {
             functionNames.add(functionName);
         }
         ;
+        // search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
+        const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,]*)\)/);
+        if (opOverloadFunctionDeclaration) {
+            const functionName = opOverloadFunctionDeclaration[1];
+            functionNames.add(functionName);
+        }
         // search the line for variable declarations with a type
         for (const typeName of typeNames) {
             const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
@@ -54,6 +60,14 @@ const getSets = (text) => {
                 const functionName = functionDeclaration[1];
                 const functionArguments = functionDeclaration[2].split(',');
                 // add the function name to list of known functions
+                functionNames.add(functionName);
+            }
+        }
+        // search the line for function declarations with a type and overload operator
+        for (const typeName of typeNames) {
+            const opOverloadFunctionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,]*)`));
+            if (opOverloadFunctionDeclaration) {
+                const functionName = opOverloadFunctionDeclaration[1];
                 functionNames.add(functionName);
             }
         }
