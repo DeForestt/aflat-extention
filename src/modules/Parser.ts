@@ -47,7 +47,6 @@ const getSets = (text : string) : NameSets =>{
 		const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte)\s+([\w\d_]+)\s*\(([\w\d_\s,]*)\)/);
 		if (functionDeclaration) {
 			const functionName = functionDeclaration[1];
-			const functionArguments = functionDeclaration[2].split(',');
 
 			// add the function name to list of known functions
 			functionNames.add(functionName);
@@ -63,10 +62,9 @@ const getSets = (text : string) : NameSets =>{
 
 		// search the line for variable declarations with a type
 		for (const typeName of typeNames) {
-			const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
-			if (variableDeclaration) {
-				const variableName = variableDeclaration[1];
-
+			const vdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
+			if (vdec) {
+				const variableName = vdec[1];
 
 				// add the variable name to list of known variables
 				variableNames.add(variableName);
@@ -75,10 +73,9 @@ const getSets = (text : string) : NameSets =>{
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
-			if (functionDeclaration) {
-				const functionName = functionDeclaration[1];
-				const functionArguments = functionDeclaration[2].split(',');
+			const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
+			if (fdec) {
+				const functionName = fdec[1];
 
 				// add the function name to list of known functions
 				functionNames.add(functionName);
@@ -87,9 +84,9 @@ const getSets = (text : string) : NameSets =>{
 
 		// search the line for function declarations with a type and overload operator
 		for (const typeName of typeNames) {
-			const opOverloadFunctionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,]*)`));
-			if (opOverloadFunctionDeclaration) {
-				const functionName = opOverloadFunctionDeclaration[1];
+			const fdec= line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,]*)`));
+			if (fdec) {
+				const functionName = fdec[1];
 				functionNames.add(functionName);
 			}
 		}

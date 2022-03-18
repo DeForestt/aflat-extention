@@ -66,9 +66,7 @@ export const atomize = (text : string) : Atom[] => {
                     line: i,
                     column: testLine.indexOf(identifier) + shift,
                     length: identifier.length
-                };
-
-                
+                }; 
             
                 // check if the identifier is in a string or angle bracket
                 let inString = false;
