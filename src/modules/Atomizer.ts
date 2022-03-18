@@ -1,3 +1,4 @@
+import { legend } from './SemanticTokenizer';
 
 // the atom unit represents an indivizible piece of the source code
 export enum AtomType {
@@ -22,142 +23,69 @@ export const atomize = (text : string) : Atom[] => {
 
     const lines = text.split(/\r\n|\r|\n/);
     for (let i = 0; i < lines.length; i++) {
-        let line = lines[i];
-        // read the line char by char
-        for (let j = 0; j < line.length; j++) {
+        const line = lines[i];
+        interface rangeStr{
+            start: number;
+            end: number;
+        }
 
-            // check for string literals
-            if (line[j] === '"'){
-                let value = '';
-                let k = j + 1;
-                while (line[k] !== '"') {
-                    value += line[k];
-                    k++;
-                    
-                    if (k === line.length){
-                        i++;
-                        k = 0;
-                        line = lines[i];
-                    }
+        // find the range of any string literals
+        const stringRanges = new Set<rangeStr>();
+        const doubleQuoteMatch = line.match(/"([^"]*)"/);
+        if (doubleQuoteMatch) {
+            for (const match of doubleQuoteMatch) {
+                stringRanges.add({
+                    start: line.indexOf(match),
+                    end: line.indexOf(match) + match.length
+                })
+            };
+        };
 
-                    if (line[k] === '\\'){
-                        value += line[k];
-                        k++;
-                        value += line[k];
-                    }
-                }
-                atoms.push({
-                    type: AtomType.stringLiteral,
-                    value: value,
-                    line: i,
-                    column: j,
-                    length: value.length
-                });
-                j = k;
-            } else
+        const angleBracketLiteralRanges = line.match(/<([^>]*)>/g);
 
-            // check for char literals
-            if (line[j] === '\''){
-                let value = '\'';
-                let k = j + 1;
-                while (line[k] !== '\'') {
-                    value += line[k];
-                    k++;
-                    
-                    if (k === line.length){
-                        i++;
-                        k = 0;
-                        line = lines[i];
-                    }
+        if (angleBracketLiteralRanges) {
+            for (const match of angleBracketLiteralRanges) {
+                stringRanges.add({
+                    start: line.indexOf(match),
+                    end: line.indexOf(match) + match.length
+                })
+            };
+        }
 
-                    if (line[k] === '\\'){
-                        value += line[k];
-                        k++;
-                        value += line[k];
-                    }
-                }
-                atoms.push({
-                    type: AtomType.charLiteral,
-                    value: value,
-                    line: i,
-                    column: j,
-                    length: value.length
-                });
-                j = k;
-            } else
-
-            // check for numbers
-            if (/[\d#-]/.test(line[j])){
-                let value = '';
-                let k = j;
-                while (/[\d#-]/.test(line[k])) {
-                    value += line[k];
-                    k++;
-                }
-                atoms.push({
-                    type: AtomType.number,
-                    value: value,
-                    line: i,
-                    column: j,
-                    length: value.length
-                });
-                j = k;
-            } else
-            
-            // check for l-objects
-            if (/[a-zA-Z_]/){
-                let value = '';
-                let k = j;
-                while (/[a-zA-Z_]/.test(line[k])) {
-                    value += line[k];
-                    k++;
-                }
-                atoms.push({
+        // regex to match an identifier
+        const identifierRegex = /[a-zA-Z_][a-zA-Z0-9_]*/;
+        let testLine = line;
+        let shift = 0;
+        let match = testLine.match(identifierRegex);
+        while (match) {
+            if (match){
+                const identifier = match[0];
+                const atom : Atom = {
                     type: AtomType.LObject,
-                    value: value,
+                    value: identifier,
                     line: i,
-                    column: j,
-                    length: value.length
-                });
-                j = k;
-            } else
+                    column: testLine.indexOf(identifier) + shift,
+                    length: identifier.length
+                };
 
-            // Check for comments
-            if (line[j] === '/' && line[j+1] === '*'){
-                let value = '';
-                let k = j + 2;
-                while (line[k] !== '*' && line[k+1] !== '/') {
-                    value += line[k];
-                    k++;
-                    
-                    if (k === line.length){
-                        i++;
-                        k = 0;
-                        line = lines[i];
+                
+            
+                // check if the identifier is in a string or angle bracket
+                let inString = false;
+                for (let range of stringRanges) {
+                    if (range.start <= atom.column && range.end >= atom.column + atom.length) {
+                        inString = true;
+                        break;
                     }
                 }
-                atoms.push({
-                    type: AtomType.Comment,
-                    value: value,
-                    line: i,
-                    column: j,
-                    length: value.length
-                });
-                j = k;
-            } else
-            // check for line comments
-            if (line[j] === '/' && line[j+1] === '/'){
-                // skip the rest of the line
-                j = line.length;
-            } else {
-                atoms.push({
-                    // everything else is a symbol
-                    type: AtomType.Symbol,
-                    value: line[j],
-                    line: i,
-                    column: j,
-                    length: 1
-                });
+                //console.log(`${identifier} at ${atom.line}:${atom.column} is in string: ${inString}`);
+                if (!inString)
+                atoms.push(atom);
+                //console.log(`before shift: ${line}`);
+                testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+                //console.log(`after shift: ${testLine} shift: ${shift}`);
+                shift = atom.column + atom.length;
+                match = testLine.match(identifierRegex);
             }
         }
     }

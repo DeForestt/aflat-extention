@@ -29,9 +29,10 @@ exports.legend = (function () {
     return new vscode.SemanticTokensLegend(tokenTypesLegend, tokenModifiersLegend);
 })();
 class DocumentSemanticTokenProvidor {
-    constructor(TokenDiagnostics) {
+    constructor(TokenDiagnostics, NameSets) {
         this.diagnosticList = [];
         this.TokenDiagnositcs = TokenDiagnostics;
+        this.NameSets = NameSets;
         TokenDiagnostics.clear();
     }
     provideDocumentSemanticTokens(document, token) {
@@ -312,6 +313,9 @@ class DocumentSemanticTokenProvidor {
                 }
                 ;
             }
+            this.NameSets.functionNames = functionNames;
+            this.NameSets.variableNames = variableNames;
+            this.NameSets.typeNames = typeNames;
             return r;
         });
     }

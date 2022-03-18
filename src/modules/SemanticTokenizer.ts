@@ -1,7 +1,10 @@
+import { atomize } from './Atomizer';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import getSets from './Parser'
+import { NameSets } from './Parser';
+import { GetErrors } from './ErrorChecker';
 
 const tokenTypes = new Map<string, number>();
 const tokenModifiers = new Map<string, number>();
@@ -34,9 +37,11 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 
 	diagnosticList : vscode.Diagnostic[] = [];
 	TokenDiagnositcs : vscode.DiagnosticCollection;
+	NameSets : NameSets;
 
-	constructor(TokenDiagnostics : vscode.DiagnosticCollection) {
+	constructor(TokenDiagnostics : vscode.DiagnosticCollection, NameSets : NameSets) {
 		this.TokenDiagnositcs = TokenDiagnostics;
+		this.NameSets = NameSets;
 		TokenDiagnostics.clear();
 	}
 
@@ -345,6 +350,11 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				}
 			};
 		}
+
+		this.NameSets.functionNames = functionNames;
+		this.NameSets.variableNames = variableNames;
+		this.NameSets.typeNames = typeNames;
+		
 		return r;
     }
 
