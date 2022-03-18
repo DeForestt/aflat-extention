@@ -1,4 +1,4 @@
-interface NameSets {
+export interface NameSets {
 	typeNames: Set<string>;
 	functionNames: Set<string>;
 	variableNames: Set<string>;
