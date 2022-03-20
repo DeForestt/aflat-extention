@@ -8,7 +8,6 @@ const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {
     if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0) return;
-    console.log('Checking for errors');
     const result : vscode.Diagnostic[] = [];
     const text = doc.getText();
     const atomList = atomize(text);
@@ -40,6 +39,9 @@ export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, Dia
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
 			if (editor) {
+                names.functionNames.clear();
+                names.typeNames.clear();
+                names.variableNames.clear();
 				GetErrors(editor.document, Diags, names);
 			}
 		})

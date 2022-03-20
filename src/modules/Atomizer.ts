@@ -41,6 +41,16 @@ export const atomize = (text : string) : Atom[] => {
             };
         };
 
+        const singleQuoteMatch = line.match(/'([^']*)'/);
+        if (singleQuoteMatch) {
+            for (const match of singleQuoteMatch) {
+                stringRanges.add({
+                    start: line.indexOf(match),
+                    end: line.indexOf(match) + match.length
+                })
+            };
+        };
+
         const angleBracketLiteralRanges = line.match(/<([^>]*)>/g);
 
         if (angleBracketLiteralRanges) {

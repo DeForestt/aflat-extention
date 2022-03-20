@@ -81,7 +81,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		this.diagnosticList = [];
 		const prelines = text.split(/\r\n|\r|\n/);
 		
-		const names = getSets(text);
+		const names = await getSets(text);
 
 		let typeNames = names.typeNames;
 		let functionNames = names.functionNames;
@@ -112,7 +112,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				
 				if (fs.existsSync(uri)){
 				const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-				const needsNameSets = getSets(needsFile.toString());
+				const needsNameSets = await getSets(needsFile.toString());
 				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -144,7 +144,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 						// check if file exists
 						if (fs.existsSync(uri)) {
 						const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-						const needsNameSets = getSets(needsFile.toString());
+						const needsNameSets = await getSets(needsFile.toString());
 						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);

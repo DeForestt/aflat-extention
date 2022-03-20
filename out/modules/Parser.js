@@ -1,11 +1,86 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const getSets = (text) => {
-    const typeNames = new Set();
-    const functionNames = new Set();
-    const variableNames = new Set();
-    const lines = text.split('\n');
+const vscode = require("vscode");
+const fs = require("fs");
+const path = require("path");
+const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
+    let typeNames = new Set();
+    let functionNames = new Set();
+    let variableNames = new Set();
     const prelines = text.split(/\r\n|\r|\n/);
+    let lines = prelines;
+    let rootDir = '';
+    for (let i = 0; i < prelines.length; i++) {
+        // match .root "dir"
+        const rootDirMatch = prelines[i].match(/.root\s+"([^"]+)"/);
+        if (rootDirMatch) {
+            rootDir = rootDirMatch[1];
+            continue;
+        }
+        // match .needs "dir"
+        const needsDirMatch = prelines[i].match(/.needs\s+"([^"]+)"/);
+        if (needsDirMatch) {
+            const needsDir = (needsDirMatch[1].endsWith('.gs')) ? needsDirMatch[1] : needsDirMatch[1] + '.gs';
+            // read the file
+            const work = vscode.workspace.workspaceFolders;
+            if (work !== undefined) {
+                const cwd = work[0].uri.fsPath;
+                const uri = path.join(cwd, rootDir, needsDir);
+                if (fs.existsSync(uri)) {
+                    const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
+                    const needsNameSets = yield getSets(needsFile.toString());
+                    typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                    functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                    variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                }
+                else {
+                    // add Diagnostic
+                    let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                }
+            }
+            else {
+                vscode.window.showErrorMessage('No workspace found');
+            }
+        }
+        // match .needs <dir>
+        const needsDirMatch2 = prelines[i].match(/.needs\s+<([^>]+)>/);
+        if (needsDirMatch2) {
+            // read libpath from .vscode/settings.json
+            if (vscode.workspace.workspaceFolders !== undefined) {
+                const config = vscode.workspace.getConfiguration('aflat');
+                const libPath = config.get('stddir');
+                if (typeof libPath === 'string') {
+                    const needsDir = (needsDirMatch2[1].endsWith('.gs')) ? needsDirMatch2[1] : needsDirMatch2[1] + '.gs';
+                    const uri = path.join(libPath, needsDir);
+                    // check if file exists
+                    if (fs.existsSync(uri)) {
+                        const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
+                        const needsNameSets = yield getSets(needsFile.toString());
+                        typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                        functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                        variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                    }
+                    else {
+                        vscode.window.showErrorMessage('File not found: ' + uri);
+                        //add error token
+                        let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                    }
+                }
+            }
+            else {
+                vscode.window.showErrorMessage('No workspace found');
+            }
+        }
+    }
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // search the line a variable declaration
@@ -45,18 +120,19 @@ const getSets = (text) => {
         }
         // search the line for variable declarations with a type
         for (const typeName of typeNames) {
-            const vdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
-            if (vdec) {
-                const variableName = vdec[1];
+            const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
+            if (variableDeclaration) {
+                const variableName = variableDeclaration[1];
                 // add the variable name to list of known variables
                 variableNames.add(variableName);
             }
         }
         // search the line for function declarations with a type
         for (const typeName of typeNames) {
-            const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
-            if (fdec) {
-                const functionName = fdec[1];
+            const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
+            if (functionDeclaration) {
+                const functionName = functionDeclaration[1];
+                const functionArguments = functionDeclaration[2].split(',');
                 // add the function name to list of known functions
                 functionNames.add(functionName);
             }
@@ -72,5 +148,5 @@ const getSets = (text) => {
     }
     // return the sets
     return { typeNames, functionNames, variableNames };
-};
+});
 exports.default = getSets;

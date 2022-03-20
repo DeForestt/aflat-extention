@@ -71,7 +71,7 @@ class DocumentSemanticTokenProvidor {
             const r = [];
             this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = (0, Parser_1.default)(text);
+            const names = yield (0, Parser_1.default)(text);
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
@@ -95,7 +95,7 @@ class DocumentSemanticTokenProvidor {
                         const uri = path.join(cwd, rootDir, needsDir);
                         if (fs.existsSync(uri)) {
                             const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                            const needsNameSets = (0, Parser_1.default)(needsFile.toString());
+                            const needsNameSets = yield (0, Parser_1.default)(needsFile.toString());
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -124,7 +124,7 @@ class DocumentSemanticTokenProvidor {
                             // check if file exists
                             if (fs.existsSync(uri)) {
                                 const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-                                const needsNameSets = (0, Parser_1.default)(needsFile.toString());
+                                const needsNameSets = yield (0, Parser_1.default)(needsFile.toString());
                                 typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                                 functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                                 variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
