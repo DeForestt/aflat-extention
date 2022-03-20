@@ -51,6 +51,17 @@ export const atomize = (text : string) : Atom[] => {
             };
         };
 
+        const commentMatch = line.match(/\/\/.*/);
+        if (commentMatch){
+            for (const match of commentMatch){
+               //console.log("found a comment")
+                stringRanges.add({
+                    start: line.indexOf(match),
+                    end: line.length
+                })
+            }
+        }
+
         const angleBracketLiteralRanges = line.match(/<([^>]*)>/g);
 
         if (angleBracketLiteralRanges) {

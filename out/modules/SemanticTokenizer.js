@@ -203,7 +203,7 @@ class DocumentSemanticTokenProvidor {
                 }
                 // search the line for function declarations with a type
                 for (const typeName of typeNames) {
-                    const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
+                    const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,\*]*)\\)`));
                     if (functionDeclaration) {
                         const functionName = functionDeclaration[1];
                         const functionArguments = functionDeclaration[2].split(',');
