@@ -84,11 +84,20 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // search the line a variable declaration
-        const variableDeclaration = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*=\s*(.*)/);
-        if (variableDeclaration) {
-            const variableName = variableDeclaration[1];
-            // add the variable name to list of known variables
-            variableNames.add(variableName);
+        const variableDeclaration = /(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*=\s*(.*)/;
+        let testLine = line;
+        let shift = 0;
+        let match = testLine.match(variableDeclaration);
+        while (match) {
+            if (match) {
+                const identifier = match[0];
+                variableNames.add(identifier);
+                //console.log(`before shift: ${line}`);
+                testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+                //console.log(`after shift: ${testLine} shift: ${shift}`);
+                shift = testLine.indexOf(identifier) + shift + identifier.length;
+                match = testLine.match(variableDeclaration);
+            }
         }
         // match a variable declaration without a value
         const variableDeclarationWithoutValue = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(;|\]|\)|\,\*)/);
@@ -120,11 +129,20 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
         }
         // search the line for variable declarations with a type
         for (const typeName of typeNames) {
-            const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
-            if (variableDeclaration) {
-                const variableName = variableDeclaration[1];
-                // add the variable name to list of known variables
-                variableNames.add(variableName);
+            const variableDeclaration = new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
+            let testLine = line;
+            let shift = 0;
+            let match = testLine.match(variableDeclaration);
+            while (match) {
+                if (match) {
+                    const identifier = match[0];
+                    variableNames.add(identifier);
+                    //console.log(`before shift: ${line}`);
+                    testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+                    //console.log(`after shift: ${testLine} shift: ${shift}`);
+                    shift = testLine.indexOf(identifier) + shift + identifier.length;
+                    match = testLine.match(variableDeclaration);
+                }
             }
         }
         // search the line for function declarations with a type
