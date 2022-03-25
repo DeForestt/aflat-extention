@@ -4,7 +4,7 @@ import { NameSets } from './Parser';
 
 const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long'
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',
-    'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false']
+    'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract']
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {
     if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0) return;

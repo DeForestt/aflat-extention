@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DocumentSemanticTokenProvidor = exports.legend = void 0;
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
@@ -71,7 +70,7 @@ class DocumentSemanticTokenProvidor {
             const r = [];
             this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = yield (0, Parser_1.default)(text);
+            const names = yield Parser_1.default(text);
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
@@ -95,7 +94,7 @@ class DocumentSemanticTokenProvidor {
                         const uri = path.join(cwd, rootDir, needsDir);
                         if (fs.existsSync(uri)) {
                             const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                            const needsNameSets = yield (0, Parser_1.default)(needsFile.toString());
+                            const needsNameSets = yield Parser_1.default(needsFile.toString());
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -124,7 +123,7 @@ class DocumentSemanticTokenProvidor {
                             // check if file exists
                             if (fs.existsSync(uri)) {
                                 const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-                                const needsNameSets = yield (0, Parser_1.default)(needsFile.toString());
+                                const needsNameSets = yield Parser_1.default(needsFile.toString());
                                 typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                                 functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                                 variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -142,7 +141,7 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
             }
-            const myNames = yield (0, Parser_1.default)(text);
+            const myNames = yield Parser_1.default(text);
             typeNames = new Set([...typeNames, ...myNames.typeNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);
