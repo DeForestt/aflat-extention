@@ -166,6 +166,10 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 			}
 		}
 
+		const myNames = await getSets(text);
+		typeNames = new Set([...typeNames, ...myNames.typeNames]);
+		functionNames = new Set([...functionNames, ...myNames.functionNames]);
+		variableNames = new Set([...variableNames, ...myNames.variableNames]);
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -226,30 +230,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				})
 			}
 
-			// search the line for variable declarations with a type
-			for (const typeName of typeNames) {
-				const variableDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`));
-				if (variableDeclaration) {
-					const variableName = variableDeclaration[1];
-
-
-					// add the variable name to list of known variables
-					variableNames.add(variableName);
-				}
-			}
-
-			// search the line for function declarations with a type
-			for (const typeName of typeNames) {
-				const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,\*]*)\\)`));
-				if (functionDeclaration) {
-					const functionName = functionDeclaration[1];
-					const functionArguments = functionDeclaration[2].split(',');
-
-					// add the function name to list of known functions
-					functionNames.add(functionName);
-				}
-			}
-
+			
 			// search the line for strings in the variable list
 			for(let word of variableNames) {
 

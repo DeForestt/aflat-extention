@@ -99,7 +99,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
         let match = testLine.match(variableDeclaration);
         while (match) {
             if (match){
-                const identifier = match[0];
+                const identifier = match[1];
 				variableNames.add(identifier);
                 //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
@@ -110,13 +110,22 @@ const getSets = async (text : string) : Promise<NameSets> =>{
         }
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = line.match(/(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(;|\]|\)|\,\*)/);
-		if (variableDeclarationWithoutValue) {
-			const variableName = variableDeclarationWithoutValue[1];
-
-			// add the variable name to list of known variables
-			variableNames.add(variableName);
-		}
+		const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(;|\]|\)|\,\*)/
+		
+        testLine = line;
+        shift = 0;
+        match = testLine.match(variableDeclarationWithoutValue);
+        while (match) {
+            if (match){
+                const identifier = match[1];
+				variableNames.add(identifier);
+                //console.log(`before shift: ${line}`);
+                testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+                //console.log(`after shift: ${testLine} shift: ${shift}`);
+                shift = testLine.indexOf(identifier) + shift + identifier.length;
+                match = testLine.match(variableDeclarationWithoutValue);
+            }
+        }
 
 		// search the line a class declaration
 		const classDeclaration = line.match(/(?:class)\s+([\w\d_]+)\s*/);
@@ -152,8 +161,9 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 			let match = testLine.match(variableDeclaration);
 			while (match) {
 				if (match){
-					const identifier = match[0];
+					const identifier = match[1];
 					variableNames.add(identifier);
+					console.log(identifier)
 					//console.log(`before shift: ${line}`);
 					testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
 					//console.log(`after shift: ${testLine} shift: ${shift}`);
@@ -165,7 +175,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,]*)\\)`));
+			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,\*]*)\\)`));
 			if (functionDeclaration) {
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
