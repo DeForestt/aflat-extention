@@ -51,6 +51,29 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
                 vscode.window.showErrorMessage('No workspace found');
             }
         }
+        if (prelines[i].trim().startsWith("import")) {
+            const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
+            const work = vscode.workspace.workspaceFolders;
+            if (work !== undefined) {
+                const cwd = work[0].uri.fsPath;
+                const uri = path.join(cwd, rootDir, needsDir);
+                if (fs.existsSync(uri)) {
+                    const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
+                    const needsNameSets = yield getSets(needsFile.toString());
+                    typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                    functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                    variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                }
+                else {
+                    // add Diagnostic
+                    let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                }
+            }
+            else {
+                vscode.window.showErrorMessage('No workspace found');
+            }
+        }
+        ;
         // match .needs <dir>
         const needsDirMatch2 = prelines[i].match(/.needs\s+<([^>]+)>/);
         if (needsDirMatch2) {
