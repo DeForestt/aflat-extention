@@ -84,7 +84,7 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // search the line a variable declaration
-        const variableDeclaration = /(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*=\s*(.*)/;
+        const variableDeclaration = /(?:int|adr|char|float|bool|short|long)\s+([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
@@ -100,7 +100,7 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
             }
         }
         // match a variable declaration without a value
-        const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short)\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+        const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
@@ -123,7 +123,7 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
             typeNames.add(className);
         }
         // search the line a function declaration ie int foo(int a, int b)
-        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte)\s+([\w\d_]+)\s*\(([\w\d_\s,\*]*)\)/);
+        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long)\s+([\w\d_]+)\s*\(([\w\d_\s,\*]*)\)/);
         if (functionDeclaration) {
             const functionName = functionDeclaration[1];
             // add the function name to list of known functions
@@ -131,7 +131,7 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
         }
         ;
         // search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
-        const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,\*]*)\)/);
+        const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,\*]*)\)/);
         if (opOverloadFunctionDeclaration) {
             const functionName = opOverloadFunctionDeclaration[1];
             functionNames.add(functionName);

@@ -36,7 +36,7 @@
 			},
 			{
 				"name":"storage.type.aflat",
-				"match": "\\b(int|adr|char|float|bool|short)\\b"
+				"match": "\\b(int|adr|char|float|bool|short|long)\\b"
 			},
 			{
 				"name": "variable",
