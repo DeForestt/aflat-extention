@@ -247,3 +247,4 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
     return { typeNames, functionNames, variableNames, nameSpaceNames };
 });
 exports.default = getSets;
+//# sourceMappingURL=Parser.js.map

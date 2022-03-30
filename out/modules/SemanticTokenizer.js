@@ -349,3 +349,4 @@ class DocumentSemanticTokenProvidor {
     }
 }
 exports.DocumentSemanticTokenProvidor = DocumentSemanticTokenProvidor;
+//# sourceMappingURL=SemanticTokenizer.js.map

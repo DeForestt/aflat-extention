@@ -5,7 +5,8 @@
         "watch": true,
         "rootDirs": ["./src"],
         "strict": true,
-        "outDir": "./out"
+        "outDir": "./out",
+        "sourceMap": true
     },
     "ignorePatterns": [
         "node_modules"
