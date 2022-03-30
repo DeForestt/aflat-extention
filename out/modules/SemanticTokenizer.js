@@ -70,7 +70,7 @@ class DocumentSemanticTokenProvidor {
             const r = [];
             this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = yield Parser_1.default(text);
+            const names = yield Parser_1.default(text, new Set());
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
@@ -94,12 +94,6 @@ class DocumentSemanticTokenProvidor {
                         const cwd = work[0].uri.fsPath;
                         const uri = path.join(cwd, rootDir, needsDir);
                         if (fs.existsSync(uri)) {
-                            const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                            const needsNameSets = yield Parser_1.default(needsFile.toString());
-                            typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-                            functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-                            variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-                            nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
                         }
                         else {
                             // add Diagnostic
@@ -111,6 +105,24 @@ class DocumentSemanticTokenProvidor {
                         vscode.window.showErrorMessage('No workspace found');
                     }
                 }
+                if (prelines[i].trim().startsWith("import")) {
+                    const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
+                    const work = vscode.workspace.workspaceFolders;
+                    if (work !== undefined) {
+                        const cwd = work[0].uri.fsPath;
+                        const uri = path.join(cwd, rootDir, needsDir);
+                        if (fs.existsSync(uri)) {
+                        }
+                        else {
+                            let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                            this.diagnosticList.push(diag);
+                        }
+                    }
+                    else {
+                        vscode.window.showErrorMessage('No workspace found');
+                    }
+                }
+                ;
                 // match .needs <dir>
                 const needsDirMatch2 = prelines[i].match(/.needs\s+<([^>]+)>/);
                 if (needsDirMatch2) {
@@ -124,12 +136,6 @@ class DocumentSemanticTokenProvidor {
                             const uri = path.join(libPath, needsDir);
                             // check if file exists
                             if (fs.existsSync(uri)) {
-                                const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-                                const needsNameSets = yield Parser_1.default(needsFile.toString());
-                                typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-                                functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-                                variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-                                nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
                             }
                             else {
                                 vscode.window.showErrorMessage('File not found: ' + uri);
@@ -144,7 +150,7 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
             }
-            const myNames = yield Parser_1.default(text);
+            const myNames = yield Parser_1.default(text, new Set());
             typeNames = new Set([...typeNames, ...myNames.typeNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);

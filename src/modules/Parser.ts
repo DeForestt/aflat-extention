@@ -9,7 +9,8 @@ export interface NameSets {
 	nameSpaceNames: Set<string>;
 }
 
-const getSets = async (text : string) : Promise<NameSets> =>{
+
+const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<NameSets> =>{
 	let typeNames = new Set<string>();
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
@@ -39,11 +40,21 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 			
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			const needsNameSets = await getSets(needsFile.toString());
-			typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-			functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-			variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-			nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+			let needsNameSets = {
+				typeNames: new Set<string>(),
+				functionNames: new Set<string>(),
+				variableNames: new Set<string>(),
+				nameSpaceNames: new Set<string>()
+			};
+			if ( NameSetsMemo.has(uri) ) {
+			} else{
+				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+			}
+
 			} else { 
 				// add Diagnostic
 				let diag : vscode.Diagnostic = new vscode.Diagnostic(
@@ -59,25 +70,29 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 
 		if (prelines[i].trim().startsWith("import")){
 			const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
-			const work = vscode.workspace.workspaceFolders
+			const work = vscode.workspace.workspaceFolders;
 			if (work !== undefined) {
 			const cwd = work[0].uri.fsPath;
 			const uri = path.join(cwd, rootDir, needsDir);
 			
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			const needsNameSets = await getSets(needsFile.toString());
-			typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-			functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-			variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-			nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+			let needsNameSets = {
+				typeNames: new Set<string>(),
+				functionNames: new Set<string>(),
+				variableNames: new Set<string>(),
+				nameSpaceNames: new Set<string>()
+			};
+			if ( NameSetsMemo.has(uri) === false ) {
+				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+			}
+
 			} else { 
-				// add Diagnostic
-				let diag : vscode.Diagnostic = new vscode.Diagnostic(
-					new vscode.Range(
-						new vscode.Position(i, 0),
-						new vscode.Position(i, prelines[i].length)),
-						`${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+				vscode.window.showErrorMessage(`${uri} does not exist`);
 			}
 			} else {
 				vscode.window.showErrorMessage('No workspace found');
@@ -97,11 +112,20 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 					// check if file exists
 					if (fs.existsSync(uri)) {
 					const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-					const needsNameSets = await getSets(needsFile.toString());
-					typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-					functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-					variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-					nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+					let needsNameSets = {
+						typeNames: new Set<string>(),
+						functionNames: new Set<string>(),
+						variableNames: new Set<string>(),
+						nameSpaceNames: new Set<string>()
+					};
+					if ( NameSetsMemo.has(uri) ) {
+					} else{
+						needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+						nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+					}
 					} else {
 						vscode.window.showErrorMessage('File not found: ' + uri);
 						//add error token
@@ -213,7 +237,6 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 				if (match){
 					const identifier = match[1];
 					variableNames.add(identifier);
-					console.log(identifier)
 					//console.log(`before shift: ${line}`);
 					testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
 					//console.log(`after shift: ${testLine} shift: ${shift}`);

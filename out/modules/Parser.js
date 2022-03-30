@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
-const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
+const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, function* () {
     let typeNames = new Set();
     let functionNames = new Set();
     let variableNames = new Set();
@@ -38,11 +38,21 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
                 const uri = path.join(cwd, rootDir, needsDir);
                 if (fs.existsSync(uri)) {
                     const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                    const needsNameSets = yield getSets(needsFile.toString());
-                    typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-                    functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-                    variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-                    nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                    let needsNameSets = {
+                        typeNames: new Set(),
+                        functionNames: new Set(),
+                        variableNames: new Set(),
+                        nameSpaceNames: new Set()
+                    };
+                    if (NameSetsMemo.has(uri)) {
+                    }
+                    else {
+                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                        typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                        functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                        variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                        nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                    }
                 }
                 else {
                     // add Diagnostic
@@ -61,15 +71,22 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
                 const uri = path.join(cwd, rootDir, needsDir);
                 if (fs.existsSync(uri)) {
                     const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-                    const needsNameSets = yield getSets(needsFile.toString());
-                    typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-                    functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-                    variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-                    nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                    let needsNameSets = {
+                        typeNames: new Set(),
+                        functionNames: new Set(),
+                        variableNames: new Set(),
+                        nameSpaceNames: new Set()
+                    };
+                    if (NameSetsMemo.has(uri) === false) {
+                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                        typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                        functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                        variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                        nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                    }
                 }
                 else {
-                    // add Diagnostic
-                    let diag = new vscode.Diagnostic(new vscode.Range(new vscode.Position(i, 0), new vscode.Position(i, prelines[i].length)), `${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+                    vscode.window.showErrorMessage(`${uri} does not exist`);
                 }
             }
             else {
@@ -90,11 +107,21 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
                     // check if file exists
                     if (fs.existsSync(uri)) {
                         const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-                        const needsNameSets = yield getSets(needsFile.toString());
-                        typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-                        functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-                        variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-                        nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                        let needsNameSets = {
+                            typeNames: new Set(),
+                            functionNames: new Set(),
+                            variableNames: new Set(),
+                            nameSpaceNames: new Set()
+                        };
+                        if (NameSetsMemo.has(uri)) {
+                        }
+                        else {
+                            needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                            typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                            functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                            variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                            nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                        }
                     }
                     else {
                         vscode.window.showErrorMessage('File not found: ' + uri);
@@ -189,7 +216,6 @@ const getSets = (text) => __awaiter(void 0, void 0, void 0, function* () {
                 if (match) {
                     const identifier = match[1];
                     variableNames.add(identifier);
-                    console.log(identifier);
                     //console.log(`before shift: ${line}`);
                     testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                     //console.log(`after shift: ${testLine} shift: ${shift}`);

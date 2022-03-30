@@ -81,7 +81,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		this.diagnosticList = [];
 		const prelines = text.split(/\r\n|\r|\n/);
 		
-		const names = await getSets(text);
+		const names = await getSets(text, new Set());
 
 		let typeNames = names.typeNames;
 		let functionNames = names.functionNames;
@@ -112,13 +112,6 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				const uri = path.join(cwd, rootDir, needsDir);
 				
 				if (fs.existsSync(uri)){
-				const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-				const needsNameSets = await getSets(needsFile.toString());
-				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
-
 				} else { 
 					// add Diagnostic
 					let diag : vscode.Diagnostic = new vscode.Diagnostic(
@@ -133,6 +126,27 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				}
 			}
 
+			if (prelines[i].trim().startsWith("import")){
+				const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
+				const work = vscode.workspace.workspaceFolders;
+				if (work !== undefined) {
+				const cwd = work[0].uri.fsPath;
+				const uri = path.join(cwd, rootDir, needsDir);
+				
+				if (fs.existsSync(uri)){
+				} else { 
+					let diag : vscode.Diagnostic = new vscode.Diagnostic(
+						new vscode.Range(
+							new vscode.Position(i, 0),
+							new vscode.Position(i, prelines[i].length)),
+							`${uri} does not exist`, vscode.DiagnosticSeverity.Error);
+					this.diagnosticList.push(diag);
+				}
+				} else {
+					vscode.window.showErrorMessage('No workspace found');
+				}
+			};
+
 			// match .needs <dir>
 			const needsDirMatch2 = prelines[i].match(/.needs\s+<([^>]+)>/);
 			if (needsDirMatch2) {
@@ -146,12 +160,6 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 						const uri = path.join(libPath, needsDir);
 						// check if file exists
 						if (fs.existsSync(uri)) {
-						const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-						const needsNameSets = await getSets(needsFile.toString());
-						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-						nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
 						} else {
 							vscode.window.showErrorMessage('File not found: ' + uri);
 							//add error token
@@ -170,7 +178,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 			}
 		}
 
-		const myNames = await getSets(text);
+		const myNames = await getSets(text, new Set());
 		typeNames = new Set([...typeNames, ...myNames.typeNames]);
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
 		variableNames = new Set([...variableNames, ...myNames.variableNames]);
