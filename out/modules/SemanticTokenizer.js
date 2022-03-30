@@ -17,7 +17,7 @@ const tokenTypes = new Map();
 const tokenModifiers = new Map();
 exports.legend = (function () {
     const tokenTypesLegend = [
-        'variable', 'class', 'function', 'string', 'error'
+        'variable', 'class', 'function', 'string', 'error', 'namespace'
     ];
     tokenTypesLegend.forEach((tokenType, index) => tokenTypes.set(tokenType, index));
     const tokenModifiersLegend = [
@@ -74,6 +74,7 @@ class DocumentSemanticTokenProvidor {
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
+            let nameSpaceNames = names.nameSpaceNames;
             let rootDir = '';
             let lines = prelines;
             for (let i = 0; i < prelines.length; i++) {
@@ -98,6 +99,7 @@ class DocumentSemanticTokenProvidor {
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                            nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
                         }
                         else {
                             // add Diagnostic
@@ -127,6 +129,7 @@ class DocumentSemanticTokenProvidor {
                                 typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                                 functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                                 variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                                nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
                             }
                             else {
                                 vscode.window.showErrorMessage('File not found: ' + uri);
@@ -145,6 +148,7 @@ class DocumentSemanticTokenProvidor {
             typeNames = new Set([...typeNames, ...myNames.typeNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);
+            nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const streingRanges = new Set();
@@ -296,10 +300,44 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
                 ;
+                // search for namespaces
+                for (let word of nameSpaceNames) {
+                    // sliding window search for word
+                    let start = 0;
+                    let end = word.length;
+                    while (end < line.length) {
+                        const window = line.substring(start, end);
+                        if (window === word) {
+                            if (start === 0 || !/[a-zA-Z0-9_]/.test(line[start - 1])) {
+                                if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
+                                    // check if the word is in a string
+                                    let inString = false;
+                                    for (const range of streingRanges) {
+                                        if (range.start <= start && range.end >= start) {
+                                            inString = true;
+                                        }
+                                    }
+                                    ;
+                                    if (!inString)
+                                        r.push({
+                                            line: i,
+                                            startCharacter: start,
+                                            length: word.length,
+                                            tokenType: 'namespace',
+                                            tokenModifiers: []
+                                        });
+                                }
+                            }
+                        }
+                        start++;
+                        end++;
+                    }
+                }
             }
             this.NameSets.functionNames = functionNames;
             this.NameSets.variableNames = variableNames;
             this.NameSets.typeNames = typeNames;
+            this.NameSets.nameSpaceNames = nameSpaceNames;
             return r;
         });
     }

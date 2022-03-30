@@ -7,7 +7,8 @@ function activate(context) {
     const names = {
         typeNames: new Set(),
         functionNames: new Set(),
-        variableNames: new Set()
+        variableNames: new Set(),
+        nameSpaceNames: new Set()
     };
     const TokenDiagnositcs = vscode.languages.createDiagnosticCollection('SemanticTokenizer');
     const ErrorDiagnostics = vscode.languages.createDiagnosticCollection('ErrorChecker');

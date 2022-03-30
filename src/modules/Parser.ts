@@ -6,12 +6,14 @@ export interface NameSets {
 	typeNames: Set<string>;
 	functionNames: Set<string>;
 	variableNames: Set<string>;
+	nameSpaceNames: Set<string>;
 }
 
 const getSets = async (text : string) : Promise<NameSets> =>{
 	let typeNames = new Set<string>();
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
+	let nameSpaceNames = new Set<string>();
 
 	const prelines = text.split(/\r\n|\r|\n/);
 	let lines = prelines;
@@ -41,6 +43,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 			typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 			functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 			variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+			nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
 			} else { 
 				// add Diagnostic
 				let diag : vscode.Diagnostic = new vscode.Diagnostic(
@@ -67,6 +70,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 			typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 			functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 			variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+			nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
 			} else { 
 				// add Diagnostic
 				let diag : vscode.Diagnostic = new vscode.Diagnostic(
@@ -97,6 +101,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 					typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 					functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 					variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+					nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
 					} else {
 						vscode.window.showErrorMessage('File not found: ' + uri);
 						//add error token
@@ -113,7 +118,6 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 			}
 		}
 	}
-
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
@@ -152,6 +156,26 @@ const getSets = async (text : string) : Promise<NameSets> =>{
                 match = testLine.match(variableDeclarationWithoutValue);
             }
         }
+
+		// match 'under'
+		const underMatch = /(?:under)\s+([\w\d_]+)/;
+		
+		testLine = line;
+		shift = 0;
+		match = testLine.match(underMatch);
+		while (match) {
+			if (match){
+				const identifier = match[1];
+				nameSpaceNames.add(identifier);
+				//console.log(`before shift: ${line}`);
+				testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+				//console.log(`after shift: ${testLine} shift: ${shift}`);
+				shift = testLine.indexOf(identifier) + shift + identifier.length;
+				match = testLine.match(underMatch);
+			}
+		}
+
+
 
 		// search the line a class declaration
 		const classDeclaration = line.match(/(?:class)\s+([\w\d_]+)\s*/);
@@ -222,7 +246,7 @@ const getSets = async (text : string) : Promise<NameSets> =>{
 	}
 
 	// return the sets
-	return {typeNames, functionNames, variableNames};
+	return {typeNames, functionNames, variableNames, nameSpaceNames};
 }
 
 export default getSets;

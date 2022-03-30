@@ -5,10 +5,10 @@ import { NameSets } from './Parser';
 const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long'
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
-    'import', 'from']
+    'import', 'from', 'under', 'export']
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {
-    if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0) return;
+    if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0 && nameSets.nameSpaceNames.size === 0) return;
     const result : vscode.Diagnostic[] = [];
     const text = doc.getText();
     const atomList = atomize(text);
@@ -19,6 +19,7 @@ export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.Diagnost
             if (!nameSets.typeNames.has(ident) && 
             !nameSets.functionNames.has(ident) && 
             !nameSets.variableNames.has(ident) && 
+            !nameSets.nameSpaceNames.has(ident) &&
             Keywords.indexOf(ident) === -1 &&
             ident !== '') {
                 const range = new vscode.Range(new vscode.Position(checkAtom.line, checkAtom.column), new vscode.Position(checkAtom.line, checkAtom.column + ident.length));
@@ -43,6 +44,7 @@ export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, Dia
                 names.functionNames.clear();
                 names.typeNames.clear();
                 names.variableNames.clear();
+                names.nameSpaceNames.clear();
 				GetErrors(editor.document, Diags, names);
 			}
 		})
