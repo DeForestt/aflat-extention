@@ -28,7 +28,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.aflat",
-				"match": "\\b(if|while|for|class|struct|else|return|new|as|signs|contract|import|from|export|under)\\b"
+				"match": "\\b(if|while|for|class|struct|else|return|new|delete|as|signs|contract|import|from|export|under)\\b"
 			},
 			{
 				"name":"storage.modifier.aflat",

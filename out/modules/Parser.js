@@ -68,7 +68,17 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             const work = vscode.workspace.workspaceFolders;
             if (work !== undefined) {
                 const cwd = work[0].uri.fsPath;
-                const uri = path.join(cwd, rootDir, needsDir);
+                let uri = path.join(cwd, rootDir, needsDir);
+                if (!needsDir.startsWith('.')) {
+                    // add the std lib
+                    const config = vscode.workspace.getConfiguration('aflat');
+                    const libPath = config.get('stddir');
+                    if (typeof libPath === 'string') {
+                        uri = path.join(libPath.replace('head', 'src'), needsDir);
+                    }
+                }
+                if (!needsDir.endsWith('.af'))
+                    uri = uri + '.af';
                 if (fs.existsSync(uri)) {
                     const needsFile = yield vscode.workspace.fs.readFile(vscode.Uri.file(uri));
                     let needsNameSets = {
@@ -84,9 +94,6 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
                         nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
                     }
-                }
-                else {
-                    vscode.window.showErrorMessage(`${uri} does not exist`);
                 }
             }
             else {

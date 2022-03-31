@@ -110,7 +110,17 @@ class DocumentSemanticTokenProvidor {
                     const work = vscode.workspace.workspaceFolders;
                     if (work !== undefined) {
                         const cwd = work[0].uri.fsPath;
-                        const uri = path.join(cwd, rootDir, needsDir);
+                        let uri = path.join(cwd, rootDir, needsDir);
+                        if (!needsDir.startsWith('.')) {
+                            // add the std lib
+                            const config = vscode.workspace.getConfiguration('aflat');
+                            const libPath = config.get('stddir');
+                            if (typeof libPath === 'string') {
+                                uri = path.join(libPath.replace('head', 'src'), needsDir);
+                            }
+                        }
+                        if (!needsDir.endsWith('.af'))
+                            uri = uri + '.af';
                         if (fs.existsSync(uri)) {
                         }
                         else {
