@@ -172,7 +172,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
         }
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s+([\w\d_]+)\s*(?:[;\]\)\,=])/
+		const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])\s+([\w\d_]+)\s*(?:[;\]\)\,=])/
 		
         testLine = line;
         shift = 0;
