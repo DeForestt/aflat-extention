@@ -161,7 +161,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             }
         }
         // match a variable declaration without a value
-        const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+        const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
