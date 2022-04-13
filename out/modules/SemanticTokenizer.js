@@ -167,41 +167,47 @@ class DocumentSemanticTokenProvidor {
             nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                const streingRanges = new Set();
-                // check for double quoted strings
-                const doubleQuoteMatch = line.match(/"([^"]*)"/);
-                if (doubleQuoteMatch) {
-                    for (const match of doubleQuoteMatch) {
-                        streingRanges.add({
-                            start: line.indexOf(match),
-                            end: line.indexOf(match) + match.length
-                        });
+                const stringRanges = new Set();
+                // sliding window to find all double quoted strings
+                for (let j = 0; j < line.length; j++) {
+                    if (line[j] === '\"') {
+                        let start = j;
+                        let end = j + 1;
+                        while ((line[end] !== '\"' || line[end - 1] === '\\') && end < line.length) {
+                            end++;
+                        }
+                        stringRanges.add({ start: start, end: end + 1 });
+                        j = end + 1;
                     }
-                    ;
                 }
-                ;
                 // check for <>
-                const angleBracketMatch = line.match(/<([^>]*)>/);
-                if (angleBracketMatch) {
-                    let angleBracketString = angleBracketMatch[1];
-                    streingRanges.add({
-                        start: line.indexOf(angleBracketString),
-                        end: line.indexOf(angleBracketString) + angleBracketString.length
-                    });
+                for (let j = 0; j < line.length; j++) {
+                    if (line[j] === '<') {
+                        let start = j;
+                        let end = j + 1;
+                        while (line[end] !== '>' && end < line.length) {
+                            end++;
+                        }
+                        stringRanges.add({ start: start, end: end + 1 });
+                        j = end + 1;
+                    }
                 }
                 // check for single quoted strings
-                const singleQuoteMatch = line.match(/'([^']*)'/);
-                if (singleQuoteMatch) {
-                    let singleQuoteString = singleQuoteMatch[1];
-                    streingRanges.add({
-                        start: line.indexOf(singleQuoteString),
-                        end: line.indexOf(singleQuoteString) + singleQuoteString.length
-                    });
+                for (let j = 0; j < line.length; j++) {
+                    if (line[j] === '\'') {
+                        let start = j;
+                        let end = j + 1;
+                        while ((line[end] !== '\'' || line[end - 1] === '\\') && end < line.length) {
+                            end++;
+                        }
+                        stringRanges.add({ start: start, end: end + 1 });
+                        j = end + 1;
+                    }
                 }
                 // check for // comments
                 const commentMatch = line.match(/\/\/(.*)/);
                 if (commentMatch) {
-                    streingRanges.add({
+                    stringRanges.add({
                         start: line.indexOf(commentMatch[1]),
                         end: line.length - 1
                     });
@@ -210,7 +216,7 @@ class DocumentSemanticTokenProvidor {
                 // check for /* comments
                 const commentMatch2 = line.match(/\/\*(.*)\*\//);
                 if (commentMatch2) {
-                    streingRanges.add({
+                    stringRanges.add({
                         start: line.indexOf(commentMatch2[1]),
                         end: line.indexOf(commentMatch2[1]) + commentMatch2[1].length
                     });
@@ -227,7 +233,7 @@ class DocumentSemanticTokenProvidor {
                                 if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
                                     // check if the word is in a string
                                     let inString = false;
-                                    for (const range of streingRanges) {
+                                    for (const range of stringRanges) {
                                         if (range.start <= start && range.end >= start) {
                                             inString = true;
                                         }
@@ -260,7 +266,7 @@ class DocumentSemanticTokenProvidor {
                                 if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
                                     // check if the word is in a string
                                     let inString = false;
-                                    for (const range of streingRanges) {
+                                    for (const range of stringRanges) {
                                         if (range.start <= start && range.end >= start) {
                                             inString = true;
                                         }
@@ -294,7 +300,7 @@ class DocumentSemanticTokenProvidor {
                                 if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
                                     // check if the word is in a string
                                     let inString = false;
-                                    for (const range of streingRanges) {
+                                    for (const range of stringRanges) {
                                         if (range.start <= start && range.end >= start) {
                                             inString = true;
                                         }
@@ -328,7 +334,7 @@ class DocumentSemanticTokenProvidor {
                                 if (end === line.length || !/[a-zA-Z0-9_]/.test(line[end])) {
                                     // check if the word is in a string
                                     let inString = false;
-                                    for (const range of streingRanges) {
+                                    for (const range of stringRanges) {
                                         if (range.start <= start && range.end >= start) {
                                             inString = true;
                                         }

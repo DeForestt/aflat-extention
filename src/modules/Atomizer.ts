@@ -18,60 +18,98 @@ export interface Atom {
     length : number;
 }
 
+interface rangeStr{
+    start: number;
+    end: number;
+}
+
 export const atomize = (text : string) : Atom[] => {
     const atoms : Atom[] = [];
-
+    let inMultiLineComment = false;
     const lines = text.split(/\r\n|\r|\n/);
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        interface rangeStr{
-            start: number;
-            end: number;
+        const stringRanges = new Set<rangeStr>();
+        if (inMultiLineComment) {
+            const commentEnd = line.indexOf('*/');
+            if (commentEnd === -1) {
+                // add the whole line to stringRanges
+                stringRanges.add({start: 0, end: line.length});
+            } else {
+                inMultiLineComment = false;
+                stringRanges.add({start: 0, end: commentEnd + 1});
+            };
         }
 
         // find the range of any string literals
-        const stringRanges = new Set<rangeStr>();
-        const doubleQuoteMatch = line.match(/"([^"]*)"/);
-        if (doubleQuoteMatch) {
-            for (const match of doubleQuoteMatch) {
-                stringRanges.add({
-                    start: line.indexOf(match),
-                    end: line.indexOf(match) + match.length
-                })
-            };
-        };
-
-        const singleQuoteMatch = line.match(/'([^']*)'/);
-        if (singleQuoteMatch) {
-            for (const match of singleQuoteMatch) {
-                stringRanges.add({
-                    start: line.indexOf(match),
-                    end: line.indexOf(match) + match.length
-                })
-            };
-        };
-
-        const commentMatch = line.match(/\/\/.*/);
-        if (commentMatch){
-            for (const match of commentMatch){
-               //console.log("found a comment")
-                stringRanges.add({
-                    start: line.indexOf(match),
-                    end: line.length
-                })
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '\"') {
+                let start = j;
+                let end = j + 1;
+                while ((line[end] !== '\"' || line[end-1] === '\\') && end < line.length) {
+                    end++;
+                }
+                stringRanges.add({start: start, end: end + 1});
+                j = end + 1;
             }
         }
 
-        const angleBracketLiteralRanges = line.match(/<([^>]*)>/g);
-
-        if (angleBracketLiteralRanges) {
-            for (const match of angleBracketLiteralRanges) {
-                stringRanges.add({
-                    start: line.indexOf(match),
-                    end: line.indexOf(match) + match.length
-                })
-            };
+        // find of single quoted strings
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '\'') {
+                let start = j;
+                let end = j+1;
+                while ((line[end] !== '\'' || line[end-1] === '\\') && end < line.length) {
+                    end++;
+                }
+                stringRanges.add({start: start, end: end + 1});
+                j = end+1;
+            }
         }
+
+        // find angle bracket strings
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '<') {
+                let start = j;
+                let end = j+1;
+                while ((line[end] !== '>') && end < line.length) {
+                    end++;
+                }
+                stringRanges.add({start: start, end: end + 1});
+                j = end+1;
+            }
+        }
+
+        // check for comments
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '/' && line[j+1] === '/') {
+                let start = j;
+                let end = j;
+                while (line[end] !== '\n' && end < line.length) {
+                    end++;
+                }
+                stringRanges.add({start: start, end: end + 1});
+                j = end;
+            }
+        }
+
+        // check for multi line comments
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '/' && line[j+1] === '*') {
+                let start = j;
+                let end = j;
+                while (line[end] !== '*' && line[end+1] !== '/' && end < line.length) {
+                    end++;
+                }
+                stringRanges.add({start: start, end: end + 1});
+                if (end + 1 < line.length) {
+                    j = end + 1;
+                } else {
+                    inMultiLineComment = true;
+                }
+            }
+        }
+
 
         // regex to match an identifier
         const identifierRegex = /[a-zA-Z_][a-zA-Z0-9_]*/;
@@ -97,12 +135,9 @@ export const atomize = (text : string) : Atom[] => {
                         break;
                     }
                 }
-                //console.log(`${identifier} at ${atom.line}:${atom.column} is in string: ${inString}`);
                 if (!inString)
                 atoms.push(atom);
-                //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                //console.log(`after shift: ${testLine} shift: ${shift}`);
                 shift = atom.column + atom.length;
                 match = testLine.match(identifierRegex);
             }

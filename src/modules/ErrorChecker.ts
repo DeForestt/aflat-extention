@@ -6,6 +6,7 @@ const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
     'import', 'from', 'under', 'export', 'delete', 'const']
+const deprecated = ['push', 'pull', 'struct']
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {
     if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0 && nameSets.nameSpaceNames.size === 0) return;
@@ -20,12 +21,19 @@ export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.Diagnost
             !nameSets.functionNames.has(ident) && 
             !nameSets.variableNames.has(ident) && 
             !nameSets.nameSpaceNames.has(ident) &&
+            deprecated.indexOf(ident) === -1 &&
             Keywords.indexOf(ident) === -1 &&
             ident !== '') {
                 const range = new vscode.Range(new vscode.Position(checkAtom.line, checkAtom.column), new vscode.Position(checkAtom.line, checkAtom.column + ident.length));
                 const diagnostic = new vscode.Diagnostic(range,
                     `Ident \"${ident}\" is not defined`,
                     vscode.DiagnosticSeverity.Error);
+                result.push(diagnostic);
+            } else if (deprecated.indexOf(ident) !== -1) {
+                const range = new vscode.Range(new vscode.Position(checkAtom.line, checkAtom.column), new vscode.Position(checkAtom.line, checkAtom.column + ident.length));
+                const diagnostic = new vscode.Diagnostic(range,
+                    `Ident \"${ident}\" is deprecated`,
+                    vscode.DiagnosticSeverity.Warning);
                 result.push(diagnostic);
             }
         }
