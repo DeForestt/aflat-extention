@@ -155,7 +155,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 		const line = lines[i];
 
 		// search the line a variable declaration
-		const variableDeclaration = /(?:int|adr|char|float|bool|short|long)\s+([\w\d_]+)\s*=\s*(.*)/;
+		const variableDeclaration = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
