@@ -5,7 +5,7 @@ import { NameSets } from './Parser';
 const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long'
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
-    'import', 'from', 'under', 'export', 'delete', 'const']
+    'import', 'from', 'under', 'export', 'delete', 'const', 'mutable']
 const deprecated = ['push', 'pull', 'struct']
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {
@@ -48,7 +48,7 @@ export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, Dia
 	}
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-			if (editor) {
+			if (editor && editor.document.languageId === 'aflat'){
                 names.functionNames.clear();
                 names.typeNames.clear();
                 names.variableNames.clear();
@@ -59,7 +59,9 @@ export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, Dia
 	);
 
 	context.subscriptions.push(
-		vscode.workspace.onDidChangeTextDocument(e => GetErrors(e.document, Diags, names))
+		vscode.workspace.onDidChangeTextDocument(e => {
+            if (e.document.languageId === 'aflat') GetErrors(e.document, Diags, names);
+        })
 	);
 
 	context.subscriptions.push(
