@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DocumentSemanticTokenProvidor = exports.legend = void 0;
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
@@ -70,7 +71,7 @@ class DocumentSemanticTokenProvidor {
             const r = [];
             this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = yield Parser_1.default(text, new Set());
+            const names = yield (0, Parser_1.default)(text, new Set());
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
@@ -160,7 +161,7 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
             }
-            const myNames = yield Parser_1.default(text, new Set());
+            const myNames = yield (0, Parser_1.default)(text, new Set());
             typeNames = new Set([...typeNames, ...myNames.typeNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);
