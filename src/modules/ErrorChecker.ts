@@ -2,7 +2,7 @@ import { Atom, AtomType, atomize } from './Atomizer';
 import * as vscode from 'vscode';
 import { NameSets } from './Parser';
 
-const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long'
+const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long', 'generic'
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
     'import', 'from', 'under', 'export', 'delete', 'const', 'mutable', 'enum']
