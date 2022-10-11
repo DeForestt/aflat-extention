@@ -155,7 +155,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 		const line = lines[i];
 
 		// search the line a variable declaration
-		const variableDeclaration = /(?:int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*=\s*(.*)/;
+		const variableDeclaration = /(?:let|int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
@@ -172,7 +172,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
         }
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*(?:[;\]\)\,=])/
+		const variableDeclarationWithoutValue = /(?:let|int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*(?:[;\]\)\,=])/
 		
         testLine = line;
         shift = 0;
