@@ -32,7 +32,7 @@
 			},
 			{
 				"name":"storage.modifier.aflat",
-				"match": "\\b(public|private|static|const|mutable)\\b"
+				"match": "\\b(public|private|static|const|mutable|safe|dynamic)\\b"
 			},
 			{
 				"name":"storage.type.aflat",
