@@ -1,10 +1,8 @@
-import { atomize } from './Atomizer';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import getSets from './Parser'
-import { NameSets } from './Parser';
-import { GetErrors } from './ErrorChecker';
+import { NameSets, Signature } from './Parser';
 
 const tokenTypes = new Map<string, number>();
 const tokenModifiers = new Map<string, number>();
@@ -87,6 +85,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		let functionNames = names.functionNames;
 		let variableNames = names.variableNames;
 		let nameSpaceNames = names.nameSpaceNames;
+		let functionSignatures = names.functionSignatures? names.functionSignatures : new Set<Signature>();
 
 
 		let rootDir = '';
@@ -193,6 +192,14 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
 		variableNames = new Set([...variableNames, ...myNames.variableNames]);
 		nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
+		functionNames = new Set([...functionNames, ...myNames.functionNames]);
+		functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures? myNames.functionSignatures : []]);
+
+		this.NameSets.functionNames = functionNames;
+		this.NameSets.variableNames = variableNames;
+		this.NameSets.typeNames = typeNames;
+		this.NameSets.nameSpaceNames = nameSpaceNames;
+		this.NameSets.functionSignatures = functionSignatures;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -395,11 +402,6 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 								}
 			}
 		}
-
-		this.NameSets.functionNames = functionNames;
-		this.NameSets.variableNames = variableNames;
-		this.NameSets.typeNames = typeNames;
-		this.NameSets.nameSpaceNames = nameSpaceNames;
 		
 		return r;
     }

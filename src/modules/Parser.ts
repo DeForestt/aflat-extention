@@ -2,11 +2,16 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface Signature {
+	ident: string;
+	params?: string[];
+}
 export interface NameSets {
 	typeNames: Set<string>;
 	functionNames: Set<string>;
 	variableNames: Set<string>;
 	nameSpaceNames: Set<string>;
+	functionSignatures?: Set<Signature>;
 }
 
 
@@ -15,6 +20,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
 	let nameSpaceNames = new Set<string>();
+	let functionSignatures = new Set<Signature>();
 
 	const prelines = text.split(/\r\n|\r|\n/);
 	let lines = prelines;
@@ -40,11 +46,11 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			let needsNameSets = {
+			let needsNameSets : NameSets = {
 				typeNames: new Set<string>(),
 				functionNames: new Set<string>(),
 				variableNames: new Set<string>(),
-				nameSpaceNames: new Set<string>()
+				nameSpaceNames: new Set<string>(),
 			};
 			if ( NameSetsMemo.has(uri) ) {
 			} else{
@@ -53,6 +59,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
 				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+				functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
 			}
 
 			} else { 
@@ -87,7 +94,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			let needsNameSets = {
+			let needsNameSets : NameSets = {
 				typeNames: new Set<string>(),
 				functionNames: new Set<string>(),
 				variableNames: new Set<string>(),
@@ -99,6 +106,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
 				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+				functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
 			}
 
 			}
@@ -120,7 +128,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 					// check if file exists
 					if (fs.existsSync(uri)) {
 					const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-					let needsNameSets = {
+					let needsNameSets : NameSets = {
 						typeNames: new Set<string>(),
 						functionNames: new Set<string>(),
 						variableNames: new Set<string>(),
@@ -133,6 +141,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
 						nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+						functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
 					}
 					} else {
 						vscode.window.showErrorMessage('File not found: ' + uri);
@@ -163,9 +172,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
             if (match){
                 const identifier = match[1];
 				variableNames.add(identifier);
-                //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                //console.log(`after shift: ${testLine} shift: ${shift}`);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclaration);
             }
@@ -199,9 +206,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			if (match){
 				const identifier = match[1];
 				nameSpaceNames.add(identifier);
-				//console.log(`before shift: ${line}`);
 				testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-				//console.log(`after shift: ${testLine} shift: ${shift}`);
 				shift = testLine.indexOf(identifier) + shift + identifier.length;
 				match = testLine.match(underMatch);
 			}
@@ -254,6 +259,15 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 
 			// add the function name to list of known functions
 			functionNames.add(functionName);
+
+			//extract the parameters from the function declaration
+			const parameters = functionDeclaration[2];
+			const paramList : string[] = parameters? parameters.split(',') : [];
+			const sig : Signature = {
+				ident: functionName,
+				params: paramList
+			};
+			functionSignatures.add(sig);
 		};
 
 		// search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
@@ -261,6 +275,15 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 		if (opOverloadFunctionDeclaration) {
 			const functionName = opOverloadFunctionDeclaration[1];
 			functionNames.add(functionName);
+
+			//extract the parameters from the function declaration
+			const parameters = opOverloadFunctionDeclaration[2];
+			const paramList : string[] = parameters? parameters.split(',') : [];
+			const sig : Signature = {
+				ident: functionName,
+				params: paramList
+			};
+			functionSignatures.add(sig);
 		}	
 
 
@@ -292,6 +315,15 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 
 				// add the function name to list of known functions
 				functionNames.add(functionName);
+
+				//extract the parameters from the function declaration
+				const parameters = functionDeclaration[2];
+				const paramList : string[] = parameters? parameters.split(',') : [];
+				const sig : Signature = {
+					ident: functionName,
+					params: paramList
+				};
+				functionSignatures.add(sig);
 			}
 		}
 
@@ -301,12 +333,22 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			if (fdec) {
 				const functionName = fdec[1];
 				functionNames.add(functionName);
+
+				//extract the parameters from the function declaration
+				const parameters = fdec[2];
+				const paramList : string[] = parameters? parameters.split(',') : [];
+				const sig : Signature = {
+					ident: functionName,
+					params: paramList
+				};
+				functionSignatures.add(sig);
+
 			}
 		}
 	}
 
 	// return the sets
-	return {typeNames, functionNames, variableNames, nameSpaceNames};
+	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures};
 }
 
 export default getSets;

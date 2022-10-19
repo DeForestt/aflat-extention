@@ -1,4 +1,4 @@
-import { Atom, AtomType, atomize } from './Atomizer';
+import { AtomType, atomize } from './Atomizer';
 import * as vscode from 'vscode';
 import { NameSets } from './Parser';
 

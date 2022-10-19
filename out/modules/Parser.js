@@ -17,6 +17,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
     let functionNames = new Set();
     let variableNames = new Set();
     let nameSpaceNames = new Set();
+    let functionSignatures = new Set();
     const prelines = text.split(/\r\n|\r|\n/);
     let lines = prelines;
     let rootDir = '';
@@ -42,7 +43,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         typeNames: new Set(),
                         functionNames: new Set(),
                         variableNames: new Set(),
-                        nameSpaceNames: new Set()
+                        nameSpaceNames: new Set(),
                     };
                     if (NameSetsMemo.has(uri)) {
                     }
@@ -52,6 +53,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                         variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
                         nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                        functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures ? needsNameSets.functionSignatures : new Set())]);
                     }
                 }
                 else {
@@ -93,6 +95,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                         variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
                         nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                        functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures ? needsNameSets.functionSignatures : new Set())]);
                     }
                 }
             }
@@ -128,6 +131,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
                             nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                            functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures ? needsNameSets.functionSignatures : new Set())]);
                         }
                     }
                     else {
@@ -145,7 +149,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // search the line a variable declaration
-        const variableDeclaration = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*=\s*(.*)/;
+        const variableDeclaration = /(?:let|int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
@@ -153,15 +157,13 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             if (match) {
                 const identifier = match[1];
                 variableNames.add(identifier);
-                //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                //console.log(`after shift: ${testLine} shift: ${shift}`);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclaration);
             }
         }
         // match a variable declaration without a value
-        const variableDeclarationWithoutValue = /(?:int|adr|char|float|bool|short|long)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+        const variableDeclarationWithoutValue = /(?:let|int|adr|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
@@ -185,9 +187,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             if (match) {
                 const identifier = match[1];
                 nameSpaceNames.add(identifier);
-                //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                //console.log(`after shift: ${testLine} shift: ${shift}`);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(underMatch);
             }
@@ -229,18 +229,34 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
         }
         ;
         // search the line a function declaration ie int foo(int a, int b)
-        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long)\s+([\w\d_]+)\s*\(([\w\d_\s,\*]*)\)/);
+        const functionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s,\*]*)\)/);
         if (functionDeclaration) {
             const functionName = functionDeclaration[1];
             // add the function name to list of known functions
             functionNames.add(functionName);
+            //extract the parameters from the function declaration
+            const parameters = functionDeclaration[2];
+            const paramList = parameters ? parameters.split(',') : [];
+            const sig = {
+                ident: functionName,
+                params: paramList
+            };
+            functionSignatures.add(sig);
         }
         ;
         // search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
-        const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,\*]*)\)/);
+        const opOverloadFunctionDeclaration = line.match(/(?:int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,\*]*)\)/);
         if (opOverloadFunctionDeclaration) {
             const functionName = opOverloadFunctionDeclaration[1];
             functionNames.add(functionName);
+            //extract the parameters from the function declaration
+            const parameters = opOverloadFunctionDeclaration[2];
+            const paramList = parameters ? parameters.split(',') : [];
+            const sig = {
+                ident: functionName,
+                params: paramList
+            };
+            functionSignatures.add(sig);
         }
         // search the line for variable declarations with a type
         for (const typeName of typeNames) {
@@ -268,6 +284,14 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                 const functionArguments = functionDeclaration[2].split(',');
                 // add the function name to list of known functions
                 functionNames.add(functionName);
+                //extract the parameters from the function declaration
+                const parameters = functionDeclaration[2];
+                const paramList = parameters ? parameters.split(',') : [];
+                const sig = {
+                    ident: functionName,
+                    params: paramList
+                };
+                functionSignatures.add(sig);
             }
         }
         // search the line for function declarations with a type and overload operator
@@ -276,11 +300,19 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             if (fdec) {
                 const functionName = fdec[1];
                 functionNames.add(functionName);
+                //extract the parameters from the function declaration
+                const parameters = fdec[2];
+                const paramList = parameters ? parameters.split(',') : [];
+                const sig = {
+                    ident: functionName,
+                    params: paramList
+                };
+                functionSignatures.add(sig);
             }
         }
     }
     // return the sets
-    return { typeNames, functionNames, variableNames, nameSpaceNames };
+    return { typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures };
 });
 exports.default = getSets;
 //# sourceMappingURL=Parser.js.map

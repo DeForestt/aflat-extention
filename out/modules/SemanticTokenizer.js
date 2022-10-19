@@ -76,6 +76,7 @@ class DocumentSemanticTokenProvidor {
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
             let nameSpaceNames = names.nameSpaceNames;
+            let functionSignatures = names.functionSignatures ? names.functionSignatures : new Set();
             let rootDir = '';
             let lines = prelines;
             for (let i = 0; i < prelines.length; i++) {
@@ -166,6 +167,13 @@ class DocumentSemanticTokenProvidor {
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);
             nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
+            functionNames = new Set([...functionNames, ...myNames.functionNames]);
+            functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures ? myNames.functionSignatures : []]);
+            this.NameSets.functionNames = functionNames;
+            this.NameSets.variableNames = variableNames;
+            this.NameSets.typeNames = typeNames;
+            this.NameSets.nameSpaceNames = nameSpaceNames;
+            this.NameSets.functionSignatures = functionSignatures;
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const stringRanges = new Set();
@@ -357,10 +365,6 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
             }
-            this.NameSets.functionNames = functionNames;
-            this.NameSets.variableNames = variableNames;
-            this.NameSets.typeNames = typeNames;
-            this.NameSets.nameSpaceNames = nameSpaceNames;
             return r;
         });
     }
