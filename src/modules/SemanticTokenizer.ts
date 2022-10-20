@@ -79,13 +79,14 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		this.diagnosticList = [];
 		const prelines = text.split(/\r\n|\r|\n/);
 		
-		const names = await getSets(text, new Set());
+		const names = await getSets(text, new Set(), "main");
 
 		let typeNames = names.typeNames;
 		let functionNames = names.functionNames;
 		let variableNames = names.variableNames;
 		let nameSpaceNames = names.nameSpaceNames;
 		let functionSignatures = names.functionSignatures? names.functionSignatures : new Set<Signature>();
+		let moduleNameSpaces = names.moduleNameSpaces;
 
 
 		let rootDir = '';
@@ -187,12 +188,13 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 			}
 		}
 
-		const myNames = await getSets(text, new Set());
+		const myNames = await getSets(text, new Set(), "main");
 		typeNames = new Set([...typeNames, ...myNames.typeNames]);
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
 		variableNames = new Set([...variableNames, ...myNames.variableNames]);
 		nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
+		moduleNameSpaces = myNames.moduleNameSpaces;
 		functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures? myNames.functionSignatures : []]);
 
 		this.NameSets.functionNames = functionNames;
@@ -200,6 +202,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		this.NameSets.typeNames = typeNames;
 		this.NameSets.nameSpaceNames = nameSpaceNames;
 		this.NameSets.functionSignatures = functionSignatures;
+		this.NameSets.moduleNameSpaces = moduleNameSpaces;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];

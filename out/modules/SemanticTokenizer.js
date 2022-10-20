@@ -71,12 +71,13 @@ class DocumentSemanticTokenProvidor {
             const r = [];
             this.diagnosticList = [];
             const prelines = text.split(/\r\n|\r|\n/);
-            const names = yield (0, Parser_1.default)(text, new Set());
+            const names = yield (0, Parser_1.default)(text, new Set(), "main");
             let typeNames = names.typeNames;
             let functionNames = names.functionNames;
             let variableNames = names.variableNames;
             let nameSpaceNames = names.nameSpaceNames;
             let functionSignatures = names.functionSignatures ? names.functionSignatures : new Set();
+            let moduleNameSpaces = names.moduleNameSpaces;
             let rootDir = '';
             let lines = prelines;
             for (let i = 0; i < prelines.length; i++) {
@@ -162,18 +163,20 @@ class DocumentSemanticTokenProvidor {
                     }
                 }
             }
-            const myNames = yield (0, Parser_1.default)(text, new Set());
+            const myNames = yield (0, Parser_1.default)(text, new Set(), "main");
             typeNames = new Set([...typeNames, ...myNames.typeNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
             variableNames = new Set([...variableNames, ...myNames.variableNames]);
             nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
             functionNames = new Set([...functionNames, ...myNames.functionNames]);
+            moduleNameSpaces = myNames.moduleNameSpaces;
             functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures ? myNames.functionSignatures : []]);
             this.NameSets.functionNames = functionNames;
             this.NameSets.variableNames = variableNames;
             this.NameSets.typeNames = typeNames;
             this.NameSets.nameSpaceNames = nameSpaceNames;
             this.NameSets.functionSignatures = functionSignatures;
+            this.NameSets.moduleNameSpaces = moduleNameSpaces;
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const stringRanges = new Set();

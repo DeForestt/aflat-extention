@@ -13,10 +13,13 @@ export class AflatSignatureHelpProvider implements vscode.SignatureHelpProvider 
 
         const functionName = lineTillCurrentPosition.split('(')[0].trim();
         const functionSignatures = this.names.functionSignatures;
-        const fn2 = functionName.split(/[\s\.]+/)[functionName.split(/[\s\.]+/).length - 1];
+        const fn2 = functionName.split(/[\s]+/)[functionName.split(/[\s]+/).length - 1];
+        const fnNs = fn2.split('.');
+        const nameSpace = fnNs.length === 2 ? fnNs[0] : '';
+        const fnName = fnNs.length === 2 ? fnNs[1] : fnNs[fnNs.length - 1];
         
         if (functionSignatures) for (const sig of functionSignatures) {
-            if (sig.ident === fn2) {
+            if (sig.ident === fnName && ((sig.moduleName === 'main' && nameSpace == '') || this.names.moduleNameSpaces?.get(nameSpace) === sig.moduleName)) {
                 const signatureHelp = new vscode.SignatureHelp();
                 const signature = new vscode.SignatureInformation(`${sig.ident}(${sig.params?.join(', ')})`);
                 signatureHelp.signatures.push(signature);

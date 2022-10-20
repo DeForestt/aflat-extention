@@ -12,12 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
-const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, function* () {
+const getSets = (text, NameSetsMemo, moduleName) => __awaiter(void 0, void 0, void 0, function* () {
     let typeNames = new Set();
     let functionNames = new Set();
     let variableNames = new Set();
     let nameSpaceNames = new Set();
     let functionSignatures = new Set();
+    let moduleNameSpaces = new Map();
     const prelines = text.split(/\r\n|\r|\n/);
     let lines = prelines;
     let rootDir = '';
@@ -48,7 +49,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                     if (NameSetsMemo.has(uri)) {
                     }
                     else {
-                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
                         typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                         functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                         variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -90,7 +91,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         nameSpaceNames: new Set()
                     };
                     if (NameSetsMemo.has(uri) === false) {
-                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                        needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), needsDir);
                         typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                         functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                         variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -126,7 +127,7 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                         if (NameSetsMemo.has(uri)) {
                         }
                         else {
-                            needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+                            needsNameSets = yield getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
                             typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
                             functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
                             variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -179,19 +180,36 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             }
         }
         // match 'under'
-        const underMatch = /(?:under)\s+([\w\d_]+)/;
+        // match 'from "capture" under [namespace]'
+        const underMatch1 = /(?:from\s+\"([^\"]+)\"\s+)?under\s+([\w\d_]+)/;
         testLine = line;
         shift = 0;
-        match = testLine.match(underMatch);
-        while (match) {
-            if (match) {
-                const identifier = match[1];
-                nameSpaceNames.add(identifier);
-                testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                shift = testLine.indexOf(identifier) + shift + identifier.length;
-                match = testLine.match(underMatch);
+        match = testLine.match(underMatch1);
+        if (match && moduleName == 'main') {
+            const mod = match[1];
+            const ns = match[2];
+            if (ns && mod) {
+                nameSpaceNames.add(ns);
+                moduleNameSpaces.set(ns, mod);
             }
+            ;
+            testLine = testLine.substring(testLine.indexOf(mod) + mod.length);
+            shift = testLine.indexOf(mod) + shift + mod.length;
+            match = testLine.match(underMatch1);
         }
+        // const underMatch = /(?:under)\s+([\w\d_]+)/;
+        // testLine = line;
+        // shift = 0;
+        // match = testLine.match(underMatch);
+        // while (match) {
+        // 	if (match){
+        // 		const identifier = match[1];
+        // 		nameSpaceNames.add(identifier);
+        // 		testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+        // 		shift = testLine.indexOf(identifier) + shift + identifier.length;
+        // 		match = testLine.match(underMatch);
+        // 	}
+        // }
         // search the line a class declaration
         const classDeclaration = line.match(/(?:class)\s+([\w\d_]+)\s*/);
         if (classDeclaration) {
@@ -239,7 +257,8 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             const paramList = parameters ? parameters.split(',') : [];
             const sig = {
                 ident: functionName,
-                params: paramList
+                params: paramList,
+                moduleName: moduleName
             };
             functionSignatures.add(sig);
         }
@@ -254,7 +273,9 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
             const paramList = parameters ? parameters.split(',') : [];
             const sig = {
                 ident: functionName,
-                params: paramList
+                params: paramList,
+                moduleName: moduleName,
+                returnType: opOverloadFunctionDeclaration[0]
             };
             functionSignatures.add(sig);
         }
@@ -289,7 +310,9 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                 const paramList = parameters ? parameters.split(',') : [];
                 const sig = {
                     ident: functionName,
-                    params: paramList
+                    params: paramList,
+                    moduleName: moduleName,
+                    returnType: typeName
                 };
                 functionSignatures.add(sig);
             }
@@ -305,14 +328,16 @@ const getSets = (text, NameSetsMemo) => __awaiter(void 0, void 0, void 0, functi
                 const paramList = parameters ? parameters.split(',') : [];
                 const sig = {
                     ident: functionName,
-                    params: paramList
+                    params: paramList,
+                    moduleName: moduleName,
+                    returnType: typeName
                 };
                 functionSignatures.add(sig);
             }
         }
     }
     // return the sets
-    return { typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures };
+    return { typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces };
 });
 exports.default = getSets;
 //# sourceMappingURL=Parser.js.map

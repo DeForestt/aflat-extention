@@ -5,6 +5,8 @@ import * as path from 'path';
 export interface Signature {
 	ident: string;
 	params?: string[];
+	moduleName: string;
+	returnType?: string;
 }
 export interface NameSets {
 	typeNames: Set<string>;
@@ -12,15 +14,17 @@ export interface NameSets {
 	variableNames: Set<string>;
 	nameSpaceNames: Set<string>;
 	functionSignatures?: Set<Signature>;
+	moduleNameSpaces?: Map<string, string>;
 }
 
 
-const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<NameSets> =>{
+const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : string) : Promise<NameSets> =>{
 	let typeNames = new Set<string>();
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
 	let nameSpaceNames = new Set<string>();
 	let functionSignatures = new Set<Signature>();
+	let moduleNameSpaces = new Map<string, string>();
 
 	const prelines = text.split(/\r\n|\r|\n/);
 	let lines = prelines;
@@ -54,7 +58,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			};
 			if ( NameSetsMemo.has(uri) ) {
 			} else{
-				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
 				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -101,7 +105,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 				nameSpaceNames: new Set<string>()
 			};
 			if ( NameSetsMemo.has(uri) === false ) {
-				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), needsDir);
 				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -136,7 +140,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 					};
 					if ( NameSetsMemo.has(uri) ) {
 					} else{
-						needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]));
+						needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
 						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -197,20 +201,41 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
         }
 
 		// match 'under'
-		const underMatch = /(?:under)\s+([\w\d_]+)/;
-		
+		// match 'from "capture" under [namespace]'
+		const underMatch1 = /(?:from\s+\"([^\"]+)\"\s+)?under\s+([\w\d_]+)/;
 		testLine = line;
 		shift = 0;
-		match = testLine.match(underMatch);
-		while (match) {
-			if (match){
-				const identifier = match[1];
-				nameSpaceNames.add(identifier);
-				testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-				shift = testLine.indexOf(identifier) + shift + identifier.length;
-				match = testLine.match(underMatch);
-			}
+		match = testLine.match(underMatch1);
+		if (match && moduleName == 'main') {
+			const mod = match[1];
+			const ns = match[2];
+
+			
+			if (ns && mod) {
+				nameSpaceNames.add(ns);
+				moduleNameSpaces.set(ns, mod);
+			};
+
+			testLine = testLine.substring(testLine.indexOf(mod) + mod.length);
+			shift = testLine.indexOf(mod) + shift + mod.length;
+			match = testLine.match(underMatch1);
 		}
+
+
+		// const underMatch = /(?:under)\s+([\w\d_]+)/;
+		
+		// testLine = line;
+		// shift = 0;
+		// match = testLine.match(underMatch);
+		// while (match) {
+		// 	if (match){
+		// 		const identifier = match[1];
+		// 		nameSpaceNames.add(identifier);
+		// 		testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+		// 		shift = testLine.indexOf(identifier) + shift + identifier.length;
+		// 		match = testLine.match(underMatch);
+		// 	}
+		// }
 
 
 
@@ -265,7 +290,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			const paramList : string[] = parameters? parameters.split(',') : [];
 			const sig : Signature = {
 				ident: functionName,
-				params: paramList
+				params: paramList,
+				moduleName: moduleName
 			};
 			functionSignatures.add(sig);
 		};
@@ -281,7 +307,9 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 			const paramList : string[] = parameters? parameters.split(',') : [];
 			const sig : Signature = {
 				ident: functionName,
-				params: paramList
+				params: paramList,
+				moduleName: moduleName,
+				returnType: opOverloadFunctionDeclaration[0]
 			};
 			functionSignatures.add(sig);
 		}	
@@ -321,7 +349,9 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 				const paramList : string[] = parameters? parameters.split(',') : [];
 				const sig : Signature = {
 					ident: functionName,
-					params: paramList
+					params: paramList,
+					moduleName: moduleName,
+					returnType: typeName
 				};
 				functionSignatures.add(sig);
 			}
@@ -339,7 +369,9 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 				const paramList : string[] = parameters? parameters.split(',') : [];
 				const sig : Signature = {
 					ident: functionName,
-					params: paramList
+					params: paramList,
+					moduleName: moduleName,
+					returnType: typeName
 				};
 				functionSignatures.add(sig);
 
@@ -348,7 +380,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>) : Promise<Name
 	}
 
 	// return the sets
-	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures};
+	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces};
 }
 
 export default getSets;
