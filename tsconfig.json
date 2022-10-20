@@ -2,7 +2,6 @@
     "compilerOptions": {
         "target": "ES6",
         "module": "commonjs",
-        "watch": true,
         "rootDirs": ["./src"],
         "strict": true,
         "outDir": "./out",
