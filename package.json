@@ -52,6 +52,39 @@
                 "description": "Specifies the folder path containing the tsserver and lib*.d.ts files to use."
               }
             }
+        },
+        "commands": [
+            {
+                "command": "aflat.run",
+                "title": "Run"
+            },
+            {
+                "command": "aflat.test",
+                "title": "Test"
+            },
+            {
+                "command": "aflat.build",
+                "title": "Build"
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "aflat.run",
+                    "when": "resourceExtname == .af",
+                    "group": "navigation"
+                },
+                {
+                    "command": "aflat.test",
+                    "when": "resourceExtname == .af",
+                    "group": "navigation"
+                },
+                {
+                    "command": "aflat.build",
+                    "when": "resourceExtname == .af",
+                    "group": "navigation"
+                }
+            ]
         }
     },
     "scripts": {

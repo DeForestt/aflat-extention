@@ -367,6 +367,8 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 							}
 						}
 					}
+					// if function name is main, add a run button
+					
 					start++;
 					end++;
 				}
