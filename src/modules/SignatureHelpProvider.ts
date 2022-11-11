@@ -27,6 +27,11 @@ export class AflatSignatureHelpProvider implements vscode.SignatureHelpProvider 
                     const paramInfo = new vscode.ParameterInformation(param.trim());
                     signature.parameters.push(paramInfo);
                 }
+                
+                if (sig.doc) {
+                    signature.documentation = new vscode.MarkdownString(sig.doc);
+                }
+
                 signatureHelp.activeSignature = 0;
                 signatureHelp.activeParameter = lineTillCurrentPosition.split(',').length - 1;
                 return signatureHelp;

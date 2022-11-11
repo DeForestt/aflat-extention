@@ -7,6 +7,7 @@ export interface Signature {
 	params?: string[];
 	moduleName: string;
 	returnType?: string;
+	doc?: string;
 }
 export interface NameSets {
 	typeNames: Set<string>;
@@ -293,6 +294,24 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 				params: paramList,
 				moduleName: moduleName
 			};
+
+			// check the line above for documentation comments
+			if (i > 0) {
+				const prevLine = lines[i - 1];
+				if (prevLine.trim().endsWith('*/')) {
+					let comment = '';
+					console.log(`prevLine: ${prevLine}`);
+					for (let j = i - 1; j >= 0; j--) {
+						const commentLine = lines[j];
+						comment = commentLine + comment + '\n';
+						if (commentLine.trim().startsWith('/*')) {
+							break;
+						}
+					}
+					sig.doc = comment;
+				};
+			}
+
 			functionSignatures.add(sig);
 		};
 
@@ -311,6 +330,24 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 				moduleName: moduleName,
 				returnType: opOverloadFunctionDeclaration[0]
 			};
+
+			// check the line above for documentation comments
+			if (i > 0) {
+				const prevLine = lines[i - 1];
+				if (prevLine.trim().endsWith('*/')) {
+					let comment = '';
+					console.log(`prevLine: ${prevLine}`);
+					for (let j = i - 1; j >= 0; j--) {
+						const commentLine = lines[j];
+						comment = commentLine + comment + '\n';
+						if (commentLine.trim().startsWith('/*')) {
+							break;
+						}
+					}
+					sig.doc = comment;
+				};
+			}
+
 			functionSignatures.add(sig);
 		}	
 
