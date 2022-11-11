@@ -29,7 +29,7 @@ export class AflatSignatureHelpProvider implements vscode.SignatureHelpProvider 
                 }
                 
                 if (sig.doc) {
-                    signature.documentation = new vscode.MarkdownString(sig.doc);
+                    signature.documentation = sig.doc;
                 }
 
                 signatureHelp.activeSignature = 0;

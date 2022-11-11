@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { SIGFPE } from 'constants';
 
 export interface Signature {
 	ident: string;
 	params?: string[];
 	moduleName: string;
 	returnType?: string;
-	doc?: string;
+	doc?: vscode.MarkdownString;
 }
 export interface NameSets {
 	typeNames: Set<string>;
@@ -299,15 +300,19 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			if (i > 0) {
 				const prevLine = lines[i - 1];
 				if (prevLine.trim().endsWith('*/')) {
-					let comment = '';
-					console.log(`prevLine: ${prevLine}`);
-					for (let j = i - 1; j >= 0; j--) {
-						const commentLine = lines[j];
-						comment = commentLine + comment + '\n';
-						if (commentLine.trim().startsWith('/*')) {
+					let comment = new vscode.MarkdownString();
+					let j = i - 1;
+					for (j = i - 1; j >= 0; j--) {
+						if (lines[j].trim().startsWith('/*')) {
 							break;
 						}
 					}
+					for (let k = j; k < i; k++) {
+						const commentLine = lines[k];
+						comment.appendMarkdown(commentLine);
+					};
+
+					console.log(`comment: ${comment}`);
 					sig.doc = comment;
 				};
 			}
@@ -334,16 +339,18 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			// check the line above for documentation comments
 			if (i > 0) {
 				const prevLine = lines[i - 1];
+				let comment = new vscode.MarkdownString();
 				if (prevLine.trim().endsWith('*/')) {
-					let comment = '';
-					console.log(`prevLine: ${prevLine}`);
-					for (let j = i - 1; j >= 0; j--) {
-						const commentLine = lines[j];
-						comment = commentLine + comment + '\n';
-						if (commentLine.trim().startsWith('/*')) {
+					let j = i - 1;
+					for (j = i - 1; j >= 0; j--) {
+						if (lines[j].trim().startsWith('/*')) {
 							break;
 						}
 					}
+					for (let k = j; k < i; k++) {
+						const commentLine = lines[k].replace('/*', '').replace('*/', '').replace('*', ' ').trim();
+						comment.appendMarkdown(commentLine);
+					};
 					sig.doc = comment;
 				};
 			}
@@ -390,6 +397,30 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 					moduleName: moduleName,
 					returnType: typeName
 				};
+
+				if (sig.ident === 'init') {
+					sig.ident = typeName;
+				}
+
+							// check the line above for documentation comments
+				if (i > 0) {
+					const prevLine = lines[i - 1];
+					let comment = new vscode.MarkdownString();
+					if (prevLine.trim().endsWith('*/')) {
+						let j = i - 1;
+						for (j = i - 1; j >= 0; j--) {
+							if (lines[j].trim().startsWith('/*')) {
+								break;
+							}
+						}
+						for (let k = j; k < i; k++) {
+							const commentLine = lines[k].replace('/*', '').replace('*/', '').replace('*', ' ').trim();
+							comment.appendMarkdown(commentLine);
+						};
+						sig.doc = comment;
+					};
+				}
+
 				functionSignatures.add(sig);
 			}
 		}
