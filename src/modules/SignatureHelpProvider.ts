@@ -19,7 +19,7 @@ export class AflatSignatureHelpProvider implements vscode.SignatureHelpProvider 
         const fnName = fnNs.length === 2 ? fnNs[1] : fnNs[fnNs.length - 1];
         
         if (functionSignatures) for (const sig of functionSignatures) {
-            if (sig.ident === fnName && ((sig.moduleName === 'main' && nameSpace == '') || this.names.moduleNameSpaces?.get(nameSpace) === sig.moduleName)) {
+            if (sig.ident === fnName && ((sig.moduleName === 'main' && nameSpace == '') || this.names.moduleNameSpaces?.get(nameSpace) === sig.moduleName || sig.ident === sig.returnType)) {
                 const signatureHelp = new vscode.SignatureHelp();
                 const signature = new vscode.SignatureInformation(`${sig.ident}(${sig.params?.join(', ')})`);
                 signatureHelp.signatures.push(signature);
