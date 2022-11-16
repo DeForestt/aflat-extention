@@ -71,7 +71,6 @@
 					"match": "\\\\."
 				}
 			]
-
 		},
 		"stringFormat": {
 			"name":"string.quoted.single",

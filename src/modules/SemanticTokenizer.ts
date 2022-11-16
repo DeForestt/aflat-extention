@@ -262,16 +262,17 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 					while ((line[end] !== '`' || line[end-1] === '\\') && end < line.length) {
 						end++;
 						if (line[end] === '{') {
-							let start2 = end;
 							let end2 = end + 1;
 							while (line[end2] !== '}' && end2 < line.length) {
 								end2++;
 							}
-							stringRanges.add({start: start, end: start2 + 1});
+							stringRanges.add({start: start, end: end});
 							end = end2 + 1;
+							start = end;
+							j = end;
 						}
-						start = end;
 					};
+					stringRanges.add({start: start, end: end + 1});
 				}
 			}
 
