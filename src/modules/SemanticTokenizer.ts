@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import getSets from './Parser'
 import { NameSets, Signature } from './Parser';
+import { lookupService } from 'dns';
 
 const tokenTypes = new Map<string, number>();
 const tokenModifiers = new Map<string, number>();
@@ -253,6 +254,28 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				}
 			}
 
+			// check for formatted strings
+			for (let j = 0; j < line.length; j++) {
+				if (line[j] === '`') {
+					let start = j;
+					let end = j + 1;
+					while ((line[end] !== '`' || line[end-1] === '\\') && end < line.length) {
+						end++;
+						if (line[end] === '{') {
+							let start2 = end;
+							let end2 = end + 1;
+							while (line[end2] !== '}' && end2 < line.length) {
+								end2++;
+							}
+							stringRanges.add({start: start, end: start2 + 1});
+							end = end2 + 1;
+						}
+						start = end;
+					};
+				}
+			}
+
+
 			// check for // comments
 			const commentMatch = line.match(/\/\/(.*)/);
 			if (commentMatch) {
@@ -271,7 +294,6 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				})
 			}
 
-			
 			// search the line for strings in the variable list
 			for(let word of variableNames) {
 
