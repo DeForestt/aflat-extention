@@ -80,6 +80,41 @@
 				{
 					"name": "constant.character.escape.aflat",
 					"match": "\\\\."
+				},
+				{
+					"name": "constant.language",
+					"begin": "\\{",
+					"end": "\\}",
+					"patterns": [
+						{
+							"include": "#keywords"
+						},
+						{
+							"include": "#preprocessor"
+						},
+						{
+							"include": "#strings"
+						},
+						{
+							"include": "#comment"
+						},
+						{
+							"include": "#class"
+						},
+						{
+							"include": "#slcomment"
+						},
+						{
+							"include": "#char"
+						},
+						{
+							"include": "#stringFormat"
+						},
+						{
+							"name":"constant.numeric",
+							"match":"\\b[0-9]+\\b"
+						}
+					]
 				}
 			]
 		},

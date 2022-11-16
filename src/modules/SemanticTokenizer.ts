@@ -269,10 +269,11 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 							stringRanges.add({start: start, end: end});
 							end = end2 + 1;
 							start = end;
-							j = end;
+							j = end + 1;
 						}
 					};
 					stringRanges.add({start: start, end: end + 1});
+					j = end + 1;
 				}
 			}
 

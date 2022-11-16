@@ -54,6 +54,29 @@ export const atomize = (text : string) : Atom[] => {
             }
         }
 
+        			// check for formatted strings
+			for (let j = 0; j < line.length; j++) {
+				if (line[j] === '`') {
+					let start = j;
+					let end = j + 1;
+					while ((line[end] !== '`' || line[end-1] === '\\') && end < line.length) {
+						end++;
+						if (line[end] === '{') {
+							let end2 = end + 1;
+							while (line[end2] !== '}' && end2 < line.length) {
+								end2++;
+							}
+							stringRanges.add({start: start, end: end});
+							end = end2 + 1;
+							start = end;
+							j = end + 1;
+						}
+					};
+					stringRanges.add({start: start, end: end + 1});
+					j = end + 1;
+				}
+			}
+
         // find of single quoted strings
         for (let j = 0; j < line.length; j++) {
             if (line[j] === '\'') {
