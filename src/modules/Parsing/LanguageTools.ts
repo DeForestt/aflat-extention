@@ -1,3 +1,4 @@
+import { CONNECTING_CHAR_REGEX, NOT_CONNECTING_CHAR_REGEX } from './../Constents';
 import { Signature, Symbol, Type } from './Parser'
 import * as vscode from 'vscode';
 
@@ -5,8 +6,6 @@ export interface LanguageData {
     data?: Signature | Signature[] | Symbol[] | string;
     error?: string; 
 };
-
-
 
 /*
  * Extracts the function signature with a given name from some text.
@@ -112,13 +111,54 @@ const extractClassText = (text: string, name: string): LanguageData => {
 const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
     const lines = text.split('\n');
     const symbols: Symbol[] = [];
+    let curlyCount = 0;
     
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const words = line.split(' ');
+        // split the line by non-alphanumeric characters
+        
+        typeList.forEach(type => {
+            // find every instance of the type in the line
+            let index = line.indexOf(type.ident);
+            while (index !== -1) {
+                // check the word before the type for the access
+                const beforeType = line.substring(0, line.indexOf(type.ident)).trim();
+                if (beforeType.trim() !== '') {
+                    const access = beforeType.split(NOT_CONNECTING_CHAR_REGEX).pop();
+                    if (access === 'private') {
+                        index = line.indexOf(type.ident, index + 1);
+                        continue;
+                    };
+                };
+
+                const afterType = line.substring(index + type.ident.length).trim();
+
+                // check the word after the type for the symbol
+                const symbol = afterType.split(NOT_CONNECTING_CHAR_REGEX)[0];
+                // check that everything before the symbol is whitespace
+                const beforeSymbol = afterType.substring(0, afterType.indexOf(symbol)).trim();
+                if (beforeSymbol !== '') {
+                    index = line.indexOf(type.ident, index + 1);
+                    continue;
+                };
+                if (!symbol) {
+                    index = line.indexOf(type.ident, index + 1);
+                    continue;
+                };
+
+                symbols.push({
+                    ident: symbol,
+                    type: type,
+                });
+                index = line.indexOf(type.ident, index + 1);
+            };
+        });
+
+        curlyCount += (line.match(/{/g) || []).length;
+        curlyCount -= (line.match(/}/g) || []).length;
     };
 
     return {data: symbols};
 };
 
-export {extractFunction, extractClassText};
+export {extractFunction, extractClassText, extractSymbols};

@@ -1,4 +1,5 @@
-import { extractFunction, extractClassText } from './LanguageTools';
+import { Type } from './Parser';
+import { extractFunction, extractClassText, extractSymbols } from './LanguageTools';
 const CLASS2TEXT = `class Test2 {
     int a;
     public int addThat(int a, int b) {
@@ -31,6 +32,13 @@ private int notFound(int a, int b) {
     return a - b;
 };
 `;
+const symbolText = `int a = 0; int b = 0;`;
+const intType: Type = {
+    ident: 'int',
+    symbols: [],
+};
+
+const typeList: Type[] = [intType];
 
 describe('LanguageTools', () => {
 
@@ -92,6 +100,19 @@ describe('LanguageTools', () => {
         it('should return an error message', () => {
             const res = extractClassText(mockText, 'Test3');
             expect(res.error).toEqual('Class Test3 not found');
+        });
+    });
+
+    describe('extractSymbols', () => {
+        it('should return a list of symbols', () => {
+            const res = extractSymbols(symbolText, typeList);
+            expect(res.data).toEqual([{
+                ident: 'a',
+                type: intType,
+            }, {
+                ident: 'b',
+                type: intType,
+            }]);
         });
     });
 });

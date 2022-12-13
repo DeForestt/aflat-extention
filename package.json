@@ -97,7 +97,8 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "test": "jest"
+        "test": "jest",
+        "debug": "node --inspect-brk ./node_modules/.bin/jest --runInBand"
     },
     "devDependencies": {
         "@babel/core": "^7.20.5",
