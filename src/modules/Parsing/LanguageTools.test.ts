@@ -1,5 +1,10 @@
-import { extractFunction } from './LanguageTools';
-
+import { extractFunction, extractClassText } from './LanguageTools';
+const CLASS2TEXT = `class Test2 {
+    int a;
+    public int addThat(int a, int b) {
+        return a + b;
+    };
+};`;
 const mockText = `
 class Test {
     int a;
@@ -7,6 +12,8 @@ class Test {
         return a + b;
     };
 };
+
+${CLASS2TEXT}
 
 export int add(int a, int b) {
     return a + b;
@@ -74,8 +81,17 @@ describe('LanguageTools', () => {
 
             const exportsOnly = extractFunction(mockText, 'notFound', 'Test', true);
             expect(exportsOnly).toEqual({message: 'Function notFound not found'});
+        });
+    });
 
-            
+    describe('extractClassText', () => {
+        it('should return the text of a class', () => {
+            const res = extractClassText(mockText, 'Test2');
+            expect(res).toEqual(CLASS2TEXT);
+        });
+        it('should return an error message', () => {
+            const res = extractClassText(mockText, 'Test3');
+            expect(res).toEqual({message: 'Class Test3 not found'});
         });
     });
 });

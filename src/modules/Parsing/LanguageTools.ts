@@ -69,7 +69,7 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
 /*
  * Extracts the full text of a given class from a module.
  */
-const extractClass = (text: string, name: string, moduleName: string): string | LanguageError => {
+const extractClassText = (text: string, name: string): string | LanguageError => {
     const lines = text.split('\n');
     let curlyCount = 0;
     let classText = '';
@@ -77,29 +77,32 @@ const extractClass = (text: string, name: string, moduleName: string): string | 
     let started = false;
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (line.indexOf(name) !== -1 && curlyCount === 0) {
+        if (!started && line.indexOf(name) !== -1 && curlyCount === 0) {
             // check the word before the line for 'class'
             const beforeClass = line.substring(0, line.indexOf(name)).trim();
             if (beforeClass !== 'class') {
                 continue;
             };
             started = true;
+            classText += line + '\n';
+            curlyCount += (line.match(/{/g) || []).length;
+            curlyCount -= (line.match(/}/g) || []).length;
+            continue;
         };
 
         if (started) {
-            if (curlyCount === 0 && i !== 0) {
-                return classText;
-            };
-
-            if (curlyCount === 1 || i === 1) {
-                classText += line + '\n';
+            if (curlyCount === 0) {
+                return classText.trim();
             }
+            
+            classText += line + '\n';
         };
 
         curlyCount += (line.match(/{/g) || []).length;
         curlyCount -= (line.match(/}/g) || []).length;
     }
-            
+
+    return {message: `Class ${name} not found`};
 };
 
-export {extractFunction};
+export {extractFunction, extractClassText};
