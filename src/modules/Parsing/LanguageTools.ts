@@ -80,8 +80,8 @@ const extractClassText = (text: string, name: string): LanguageData => {
         const line = lines[i];
         if (!started && line.indexOf(name) !== -1 && curlyCount === 0) {
             // check the word before the line for 'class'
-            const beforeClass = line.substring(0, line.indexOf(name)).trim();
-            if (beforeClass !== 'class') {
+            const beforeClass = line.substring(0, line.indexOf(name)).trim().split(' ').pop();
+            if (beforeClass !== 'class' && beforeClass !== 'enum') {
                 continue;
             };
             started = true;
@@ -105,6 +105,7 @@ const extractClassText = (text: string, name: string): LanguageData => {
 
     return {error: `Class ${name} not found`};
 };
+
 
 /*
  * Extracts all of the variable, symbols in some text. ie: ...<access> <type> <symbol>...;
@@ -241,6 +242,30 @@ const extractFunctions = (text: string, moduleName: string, exportsOnly?: boolea
     return {data: functions};
 };
 
+const typeFromEnum = (name: string, text: string): Type => {
+    // get everything between the first and last curly braces
+    const useText = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
+    // remove all whitespace
+    const noWhitespace = useText.replace(/\s/g, '');
+    // split by commas
+    const values = noWhitespace.split(',');
+    const symbols: Symbol[] = values.map(value => {
+        return {
+            ident: value,
+            type: {
+                ident: name,
+                functions: [],
+                symbols: [],
+            },
+        };
+    });
+    return {
+        ident: name,
+        functions: [],
+        symbols: symbols,
+    };
+};
+
 /*
  * Creates a type from a class name and a text string.
  */
@@ -250,6 +275,10 @@ const createTypeFromClass = (name: string, text: string, typeList: Type[]): Type
         functions: [],
         symbols: [],
     }]);
+
+    if (text.trim().startsWith('enum')) {
+        return typeFromEnum(name, text);
+    };
 
     // remove the first and last curly braces
     const useText = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
