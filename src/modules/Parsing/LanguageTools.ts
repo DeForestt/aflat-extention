@@ -1,16 +1,17 @@
-import { Signature } from './Parser'
+import { Signature, Symbol, Type } from './Parser'
 import * as vscode from 'vscode';
 
-type LanguageError = {
-    message: string;
+export interface LanguageData {
+    data?: Signature | Signature[] | Symbol[] | string;
+    error?: string; 
 };
 
 
 
 /*
- * Extracts the function signature with a given name from a module.
+ * Extracts the function signature with a given name from some text.
  */
-const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): Signature | LanguageError =>{
+const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): LanguageData =>{
     const lines = text.split('\n');
     let curlyCount = 0;
     
@@ -57,19 +58,19 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
                 doc: markdownString,
                 moduleName: moduleName,
             };
-            return signature;
+            return {data: signature};
         };
 
         curlyCount += (line.match(/{/g) || []).length;
         curlyCount -= (line.match(/}/g) || []).length;
     };
-    return {message: `Function ${name} not found`};
+    return {error: `Function ${name} not found`};
 };
 
 /*
- * Extracts the full text of a given class from a module.
+ * Extracts the full text of a given class from some text.
  */
-const extractClassText = (text: string, name: string): string | LanguageError => {
+const extractClassText = (text: string, name: string): LanguageData => {
     const lines = text.split('\n');
     let curlyCount = 0;
     let classText = '';
@@ -92,7 +93,7 @@ const extractClassText = (text: string, name: string): string | LanguageError =>
 
         if (started) {
             if (curlyCount === 0) {
-                return classText.trim();
+                return {data: classText.trim()};
             }
             
             classText += line + '\n';
@@ -102,7 +103,22 @@ const extractClassText = (text: string, name: string): string | LanguageError =>
         curlyCount -= (line.match(/}/g) || []).length;
     }
 
-    return {message: `Class ${name} not found`};
+    return {error: `Class ${name} not found`};
+};
+
+/*
+ * Extracts all of the variable, symbols in some text. ie: ...<access> <type> <symbol>...;
+ */
+const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
+    const lines = text.split('\n');
+    const symbols: Symbol[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const words = line.split(' ');
+    };
+
+    return {data: symbols};
 };
 
 export {extractFunction, extractClassText};

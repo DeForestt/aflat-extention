@@ -9,6 +9,17 @@ export interface Signature {
 	returnType?: string;
 	doc?: vscode.MarkdownString;
 }
+
+export interface Type {
+	ident: string;
+	symbols: Symbol[];
+};
+
+export interface Symbol {
+	ident: string;
+	type: Type;
+};
+
 export interface NameSets {
 	typeNames: Set<string>;
 	functionNames: Set<string>;

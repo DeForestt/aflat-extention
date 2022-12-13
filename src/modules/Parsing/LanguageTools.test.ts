@@ -51,7 +51,7 @@ describe('LanguageTools', () => {
         
         it('should return a function signature', () => {
             const res = extractFunction(mockText, 'add', 'Test');
-            expect(res).toEqual({
+            expect(res.data).toEqual({
                 ident: 'add',
                 returnType: 'int',
                 moduleName: 'Test',
@@ -62,36 +62,36 @@ describe('LanguageTools', () => {
 
         it('should return an error message', () => {
             const res = extractFunction(mockText, 'notFound', 'Test');
-            expect(res).toEqual({message: 'Function notFound not found'});
+            expect(res.error).toEqual('Function notFound not found');
         });
 
         it('should not find a function signature if it is in a class', () => {
             const res = extractFunction(mockText, 'addThis', 'Test');
-            expect(res).toEqual({message: 'Function addThis not found'});
+            expect(res.error).toEqual('Function addThis not found');
         });
 
         it('should adhere to export only', () => {
             const res = extractFunction(mockText, 'notExported', 'Test', true);
-            expect(res).toEqual({message: 'Function notExported not found'});
+            expect(res.error).toEqual('Function notExported not found');
         });
 
         it('should never find a private function', () => {
             const alowNotExport = extractFunction(mockText, 'notFound', 'Test');
-            expect(alowNotExport).toEqual({message: 'Function notFound not found'});
+            expect(alowNotExport.error).toEqual('Function notFound not found');
 
             const exportsOnly = extractFunction(mockText, 'notFound', 'Test', true);
-            expect(exportsOnly).toEqual({message: 'Function notFound not found'});
+            expect(exportsOnly.error).toEqual('Function notFound not found');
         });
     });
 
     describe('extractClassText', () => {
         it('should return the text of a class', () => {
             const res = extractClassText(mockText, 'Test2');
-            expect(res).toEqual(CLASS2TEXT);
+            expect(res.data).toEqual(CLASS2TEXT);
         });
         it('should return an error message', () => {
             const res = extractClassText(mockText, 'Test3');
-            expect(res).toEqual({message: 'Class Test3 not found'});
+            expect(res.error).toEqual('Class Test3 not found');
         });
     });
 });
