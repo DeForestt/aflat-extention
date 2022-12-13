@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import getSets from './Parser'
-import { NameSets, Signature } from './Parser';
+import getSets from './Parsing/Parser'
+import { NameSets, Signature } from './Parsing/Parser';
 import { lookupService } from 'dns';
 
 const tokenTypes = new Map<string, number>();

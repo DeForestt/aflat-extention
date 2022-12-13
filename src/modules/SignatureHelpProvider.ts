@@ -1,5 +1,5 @@
 import { legend } from './SemanticTokenizer';
-import { NameSets, Signature } from './Parser';
+import { NameSets, Signature } from './Parsing/Parser';
 import * as vscode from 'vscode';
 
 export class AflatSignatureHelpProvider implements vscode.SignatureHelpProvider {

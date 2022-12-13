@@ -1,4 +1,4 @@
-import { NameSets } from './modules/Parser';
+import { NameSets } from './modules/Parsing/Parser';
 import * as vscode from 'vscode';
 import { legend, DocumentSemanticTokenProvidor} from './modules/SemanticTokenizer';
 import { subscribeToDocumentChanges } from './modules/ErrorChecker';
