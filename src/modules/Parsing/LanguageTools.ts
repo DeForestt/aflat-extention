@@ -1,6 +1,7 @@
 import {NOT_CONNECTING_CHAR_REGEX } from './../Constents';
 import { Signature, Symbol, Type } from './Parser'
 import * as vscode from 'vscode';
+import { types } from '@babel/core';
 
 export interface LanguageData {
     data?: Signature | Signature[] | Symbol[] | string;
@@ -112,11 +113,12 @@ const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
     const lines = text.split('\n');
     const symbols: Symbol[] = [];
     let curlyCount = 0;
+    let perentCount = 0;
     
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // split the line by non-alphanumeric characters
-        
+        perentCount += (line.match(/\(/g) || []).length;
         typeList.forEach(type => {
             // find every instance of the type in the line
             let index = line.indexOf(type.ident);
@@ -145,6 +147,10 @@ const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
                     index = line.indexOf(type.ident, index + 1);
                     continue;
                 };
+                if (curlyCount > 0 || perentCount > 0) {
+                    index = line.indexOf(type.ident, index + 1);
+                    continue;
+                }
 
                 symbols.push({
                     ident: symbol,
@@ -152,6 +158,7 @@ const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
                 });
                 index = line.indexOf(type.ident, index + 1);
             };
+            perentCount -= (line.match(/\)/g) || []).length;
         });
 
         curlyCount += (line.match(/{/g) || []).length;
@@ -237,9 +244,18 @@ const extractFunctions = (text: string, moduleName: string, exportsOnly?: boolea
 /*
  * Creates a type from a class name and a text string.
  */
-const createTypeFromClass = (name: string, text: string): Type => {
-    const functions = extractFunctions(text, name).data as Signature[];
-    const symbols = extractSymbols(text, []).data as Symbol[];
+const createTypeFromClass = (name: string, text: string, typeList: Type[]): Type => {
+    const types = typeList.concat([{
+        ident: name,
+        functions: [],
+        symbols: [],
+    }]);
+
+    // remove the first and last curly braces
+    const useText = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
+
+    const functions = extractFunctions(useText, name).data as Signature[];
+    const symbols = extractSymbols(useText, types).data as Symbol[];
     return {
         ident: name,
         functions: functions,

@@ -1,5 +1,5 @@
 import { Type, Signature } from './Parser';
-import { extractFunction, extractClassText, extractSymbols, extractFunctions } from './LanguageTools';
+import { extractFunction, extractClassText, extractSymbols, extractFunctions, createTypeFromClass } from './LanguageTools';
 const CLASS2TEXT = `class Test2 {
     int a;
     public int addThat(int a, int b) {
@@ -8,7 +8,7 @@ const CLASS2TEXT = `class Test2 {
 };`;
 const mockText = `
 class Test {
-    int a;
+    int a = 0;
     public int addThis(int a, int b) {
         return a + b;
     };
@@ -36,6 +36,7 @@ const symbolText = `int a = 0; int b = 0;`;
 const intType: Type = {
     ident: 'int',
     symbols: [],
+    functions: [],
 };
 
 const typeList: Type[] = [intType];
@@ -130,6 +131,15 @@ describe('LanguageTools', () => {
             // should have 2 functions
             const data = res.data as Signature[];
             expect(data.length).toBe(2);
+        });
+    });
+
+    describe('createTypeFromClass', () => {
+        it('should return a type from a class', () => {
+            const res = createTypeFromClass('Test2', CLASS2TEXT, typeList);
+            console.log(res);
+            expect(res.functions.length).toBe(1);
+            expect(res.symbols.length).toBe(1);
         });
     });
 });
