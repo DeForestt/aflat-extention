@@ -1,5 +1,5 @@
-import { Type } from './Parser';
-import { extractFunction, extractClassText, extractSymbols } from './LanguageTools';
+import { Type, Signature } from './Parser';
+import { extractFunction, extractClassText, extractSymbols, extractFunctions } from './LanguageTools';
 const CLASS2TEXT = `class Test2 {
     int a;
     public int addThat(int a, int b) {
@@ -113,6 +113,23 @@ describe('LanguageTools', () => {
                 ident: 'b',
                 type: intType,
             }]);
+        });
+
+        it('should not extract private symbols', () => {
+            const res = extractSymbols('private int a = 0;', typeList);
+            expect(res.data).toEqual([]);
+        });
+
+    });
+
+    describe('extractFunctions', () => {
+        it('should return a list of functions', () => {
+            const res = extractFunctions(mockText, 'Test', true);
+            // should be a list
+            expect(Array.isArray(res.data)).toBe(true);
+            // should have 2 functions
+            const data = res.data as Signature[];
+            expect(data.length).toBe(2);
         });
     });
 });

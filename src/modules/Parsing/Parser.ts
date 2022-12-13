@@ -13,6 +13,7 @@ export interface Signature {
 export interface Type {
 	ident: string;
 	symbols: Symbol[];
+	functions: Signature[];
 };
 
 export interface Symbol {

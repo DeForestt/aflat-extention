@@ -1,4 +1,4 @@
-import { CONNECTING_CHAR_REGEX, NOT_CONNECTING_CHAR_REGEX } from './../Constents';
+import {NOT_CONNECTING_CHAR_REGEX } from './../Constents';
 import { Signature, Symbol, Type } from './Parser'
 import * as vscode from 'vscode';
 
@@ -10,7 +10,7 @@ export interface LanguageData {
 /*
  * Extracts the function signature with a given name from some text.
  */
-const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): LanguageData =>{
+const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): LanguageData => {
     const lines = text.split('\n');
     let curlyCount = 0;
     
@@ -161,4 +161,90 @@ const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
     return {data: symbols};
 };
 
-export {extractFunction, extractClassText, extractSymbols};
+/*
+ * Extracts all of the functions in some text.
+ * ie: ...<access> <returnType> <functionName>(<args>)...;
+ */
+const extractFunctions = (text: string, moduleName: string, exportsOnly?: boolean): LanguageData => {
+    const lines = text.split('\n');
+    const functions: Signature[] = [];
+    let curlyCount = 0;
+
+    for (const line of lines) {
+        if (line.indexOf('(') === -1) {
+            continue;
+        };
+
+        const beforeOpenParen = line.substring(0, line.indexOf('(')).trim();
+        const name = beforeOpenParen.split(NOT_CONNECTING_CHAR_REGEX).pop();
+        if (!name) {
+            continue;
+        };
+        const beforeName = beforeOpenParen.substring(0, beforeOpenParen.indexOf(name)).trim();
+        const words = beforeName.split(NOT_CONNECTING_CHAR_REGEX);
+        if (words.length === 0) {
+            continue;
+        };
+        const returnType = words.pop();
+        if (!returnType) {
+            continue;
+        }
+        const access = words.pop();
+        if (exportsOnly && access !== 'export') {
+            continue;
+        }
+        if (access === 'private') {
+            continue;
+        }
+
+        const argList = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+        const args: string[] = argList.split(',');
+
+        args.forEach((arg, i) => {
+            args[i] = arg.trim();
+        });
+
+        // check the previous lines for docstrings
+        let docstring = '';
+        if (lines.indexOf(line) > 0) {
+            const prev = lines[lines.indexOf(line) - 1];
+            if (prev.endsWith('*/')) {
+                for (let i = lines.indexOf(line) - 2; i >= 0; i--) {
+                    const prev = lines[i];
+                    if (prev.startsWith('/*')) {
+                        docstring = prev.substring(prev.indexOf('/*') + 2) + docstring;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        };
+
+        const markdownString = docstring !== '' ? new vscode.MarkdownString(docstring) : undefined;
+
+        functions.push({
+            ident: name,
+            moduleName: moduleName,
+            returnType: returnType,
+            params: args,
+            doc: markdownString,
+        });
+    };
+
+    return {data: functions};
+};
+
+/*
+ * Creates a type from a class name and a text string.
+ */
+const createTypeFromClass = (name: string, text: string): Type => {
+    const functions = extractFunctions(text, name).data as Signature[];
+    const symbols = extractSymbols(text, []).data as Symbol[];
+    return {
+        ident: name,
+        functions: functions,
+        symbols: symbols,
+    }
+};
+
+export {extractFunction, extractClassText, extractSymbols, extractFunctions, createTypeFromClass};
