@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SIGFPE } from 'constants';
 
 export interface Signature {
 	ident: string;
