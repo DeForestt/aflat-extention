@@ -1,10 +1,11 @@
-import { NameSets } from './modules/Parser';
+import { NameSets } from './modules/Parsing/Parser';
 import * as vscode from 'vscode';
 import { legend, DocumentSemanticTokenProvidor} from './modules/SemanticTokenizer';
 import { subscribeToDocumentChanges } from './modules/ErrorChecker';
 import { AflatSignatureHelpProvider } from './modules/SignatureHelpProvider';
 
 export function activate(context: vscode.ExtensionContext) {
+	console.log('Congratulations, your extension "aflat" is now active!');
 	const names : NameSets = {
 		typeNames: new Set(),
 		functionNames: new Set(),

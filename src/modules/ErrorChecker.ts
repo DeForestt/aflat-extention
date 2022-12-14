@@ -1,6 +1,6 @@
 import { AtomType, atomize } from './Atomizer';
 import * as vscode from 'vscode';
-import { NameSets } from './Parser';
+import { NameSets } from './Parsing/Parser';
 
 const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long', 'generic'
     , 'if', 'else', 'while', 'for', 'signs', 'return', 'new', 'as', 'needs', 'root',

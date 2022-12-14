@@ -1,8 +1,10 @@
+import { TYPES } from './Constents';
 import * as vscode from 'vscode';
+import { createTypeFromClass, extractFunction, extractFunctions, LanguageData, extractClassText } from './Parsing/LanguageTools';
 import * as fs from 'fs';
 import * as path from 'path';
-import getSets from './Parser'
-import { NameSets, Signature } from './Parser';
+import getSets from './Parsing/Parser'
+import { NameSets, Signature } from './Parsing/Parser';
 import { lookupService } from 'dns';
 
 const tokenTypes = new Map<string, number>();
@@ -88,6 +90,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		let nameSpaceNames = names.nameSpaceNames;
 		let functionSignatures = names.functionSignatures? names.functionSignatures : new Set<Signature>();
 		let moduleNameSpaces = names.moduleNameSpaces;
+		let typeList = names.typeList;
 
 
 		let rootDir = '';
@@ -141,22 +144,78 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 						uri = path.join(libPath.replace('head', 'src'), needsDir);
 					}
 				}
-
+	
 				if (!needsDir.endsWith('.af')) uri = uri + '.af';
-				
+	
 				if (fs.existsSync(uri)){
-				} else { 
-					let diag : vscode.Diagnostic = new vscode.Diagnostic(
-						new vscode.Range(
-							new vscode.Position(i, 0),
-							new vscode.Position(i, prelines[i].length)),
-							`${uri} does not exist`, vscode.DiagnosticSeverity.Error);
-					this.diagnosticList.push(diag);
+					const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
+	
+					if ( prelines[i].indexOf('{')!== -1 && prelines[i].indexOf('}')!== -1) {
+						// we are looking for functions
+						const functionList = prelines[i].substring(prelines[i].indexOf('{') + 1, prelines[i].lastIndexOf('}'));
+						const fNames = functionList.split(',');
+						for (const name of fNames) {
+							const func: LanguageData = extractFunction(needsFile.toString(), name.trim(), needsDir, true);
+							if (func.error) {
+								let diag : vscode.Diagnostic = new vscode.Diagnostic(
+									new vscode.Range(
+										new vscode.Position(i, 0),
+										new vscode.Position(i, prelines[i].length)),
+										func.error, vscode.DiagnosticSeverity.Error);
+										console.log(func.error);
+							} else if (func.data) {
+								functionSignatures.add(func.data as Signature);
+								functionNames.add(name.trim());
+							};
+						}
+					} else if ( prelines[i].indexOf('*') !== -1) {
+						// we are looking for all functions
+						const funcList: LanguageData = extractFunctions(needsFile.toString(), needsDir, true);
+						if (funcList.error) {
+							let diag : vscode.Diagnostic = new vscode.Diagnostic(
+								new vscode.Range(
+									new vscode.Position(i, 0),
+									new vscode.Position(i, prelines[i].length)),
+									funcList.error, vscode.DiagnosticSeverity.Error);
+						} else if (funcList.data) {
+							const functions  = funcList.data as Signature[];
+							functionSignatures = new Set([...functionSignatures, ...functions]);
+							functionNames = new Set([...functionNames, ...functions.map(f => f.ident)]);
+						}
+					} else {
+						// we are looking from Class names between 'import' and 'from'
+						const classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
+						const classNames = classList.split(',');
+						for (const name of classNames) {
+							const classData: LanguageData = extractClassText(needsFile.toString(), name.trim());
+							if (classData.error) {
+								console.log(classData.error);
+								let diag : vscode.Diagnostic = new vscode.Diagnostic(
+									new vscode.Range(
+										new vscode.Position(i, 0),
+										new vscode.Position(i, prelines[i].length)),
+										classData.error, vscode.DiagnosticSeverity.Error);
+							} else if (classData.data) {
+								const classData2 = classData.data as string;
+								if (!typeList) typeList = TYPES;
+								const classType = createTypeFromClass(name.trim(), classData2, typeList);
+								if (classType) {
+									typeList.push(classType);
+									typeNames.add(name.trim());
+									variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
+									functionNames = new Set([...functionNames, ...classType.functions.map(f => f.ident)]);
+									functionSignatures = new Set([...functionSignatures, ...classType.functions]);
+									console.log(`Added class ${name.trim()} with ${classType.symbols.length} variables and ${classType.functions.length} functions`)
+								}
+							};
+						}
+					};
 				}
 				} else {
 					vscode.window.showErrorMessage('No workspace found');
 				}
 			};
+	
 
 			// match .needs <dir>
 			const needsDirMatch2 = prelines[i].match(/.needs\s+<([^>]+)>/);
@@ -165,7 +224,6 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				if (vscode.workspace.workspaceFolders !== undefined) {
 					const config = vscode.workspace.getConfiguration('aflat');
 					const libPath = config.get('stddir');
-					//console.log(libPath);
 					if (typeof libPath === 'string') {
 						const needsDir = (needsDirMatch2[1].endsWith('.gs')) ? needsDirMatch2[1] :  needsDirMatch2[1] + '.gs';
 						const uri = path.join(libPath, needsDir);
