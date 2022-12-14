@@ -1,4 +1,4 @@
-import {NOT_CONNECTING_CHAR_REGEX } from './../Constents';
+import {NOT_CONNECTING_CHAR_REGEX, CONNECTING_CHAR_REGEX } from './../Constents';
 import { Signature, Symbol, Type } from './Parser'
 import * as vscode from 'vscode';
 import { types } from '@babel/core';
@@ -17,12 +17,25 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
     
     for (const line of lines) {
         if (line.indexOf(name) !== -1 && curlyCount === 0) {
+            // check that the function name is not part of a larger word
+            const nextChar = line.substring(line.indexOf(name) + name.length, line.indexOf(name) + name.length + 1);
+            const lastChar = line.substring(line.indexOf(name) - 1, line.indexOf(name));
+            if (nextChar.match(CONNECTING_CHAR_REGEX) ||
+             lastChar.match(CONNECTING_CHAR_REGEX)) {
+                curlyCount += (line.match(/{/g) || []).length;
+                curlyCount -= (line.match(/}/g) || []).length;
+                continue;
+             };
+
             // check the word before the line for the return type
             const returnType = line.substring(0, line.indexOf(name)).trim().split(' ').pop();
             const beforeReturn = line.substring(0, line.indexOf(name)).trim();
             
             if (exportsOnly && beforeReturn.indexOf('export') === -1 ||
              beforeReturn.indexOf('private') !== -1) {
+                
+                curlyCount += (line.match(/{/g) || []).length;
+                curlyCount -= (line.match(/}/g) || []).length;
                 continue;
             };
             
