@@ -106,6 +106,11 @@ const extractClassText = (text: string, name: string): LanguageData => {
     let curlyCount = 0;
     let classText = '';
     
+    const updateCurlyCount = (line: string) => {
+        curlyCount += (removeDoubleQuotedStrings(removeSingleQuotedStrings(line)).match(/{/g) || []).length;
+        curlyCount -= (removeDoubleQuotedStrings(removeSingleQuotedStrings(line)).match(/}/g) || []).length;
+    };
+
     let started = false;
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -113,12 +118,12 @@ const extractClassText = (text: string, name: string): LanguageData => {
             // check the word before the line for 'class'
             const beforeClass = line.substring(0, line.indexOf(name)).trim().split(' ').pop();
             if (beforeClass !== 'class' && beforeClass !== 'enum') {
+                updateCurlyCount(line);
                 continue;
             };
             started = true;
             classText += line + '\n';
-            curlyCount += (line.match(/{/g) || []).length;
-            curlyCount -= (line.match(/}/g) || []).length;
+            updateCurlyCount(line);
             continue;
         };
 
@@ -130,8 +135,7 @@ const extractClassText = (text: string, name: string): LanguageData => {
             classText += line + '\n';
         };
 
-        curlyCount += (line.match(/{/g) || []).length;
-        curlyCount -= (line.match(/}/g) || []).length;
+        updateCurlyCount(line);
     }
 
     return {error: `Class ${name} not found`};
