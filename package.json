@@ -3,7 +3,7 @@
     "displayName": "AFlat",
     "description": "A VS Code Extention for an AFlat Project",
     "version": "0.0.1",
-    "main": "./out/index.js",
+    "main": "./out/src/index.js",
     "activationEvents": [
         "onCommand:aflat.sayHello",
         "onLanguage:aflat"

@@ -8,12 +8,34 @@ export interface LanguageData {
     error?: string; 
 };
 
+const removeDoubleQuotedStrings  = (line: string): string => {
+    // Create a regular expression that matches double quoted strings
+    const regex = /"([^"]*)"/g;
+  
+    // Replace all double quoted strings with an empty string
+    return line.replace(regex, '');
+}
+
+const removeSingleQuotedStrings  = (line: string): string => {
+    // Create a regular expression that matches double quoted strings
+    const regex = /'([^']*)'/g;
+
+    // Replace all double quoted strings with an empty string
+    return line.replace(regex, '');
+}
+  
+
 /*
  * Extracts the function signature with a given name from some text.
  */
 const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): LanguageData => {
     const lines = text.split('\n');
     let curlyCount = 0;
+
+    const updateCurlyCount = (line: string) => {
+        curlyCount += (removeDoubleQuotedStrings(removeSingleQuotedStrings(line)).match(/{/g) || []).length;
+        curlyCount -= (removeDoubleQuotedStrings(removeSingleQuotedStrings(line)).match(/}/g) || []).length;
+    };
     
     for (const line of lines) {
         if (line.indexOf(name) !== -1 && curlyCount === 0) {
@@ -22,8 +44,7 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
             const lastChar = line.substring(line.indexOf(name) - 1, line.indexOf(name));
             if (nextChar.match(CONNECTING_CHAR_REGEX) ||
              lastChar.match(CONNECTING_CHAR_REGEX)) {
-                curlyCount += (line.match(/{/g) || []).length;
-                curlyCount -= (line.match(/}/g) || []).length;
+                updateCurlyCount(line);
                 continue;
              };
 
@@ -33,9 +54,7 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
             
             if (exportsOnly && beforeReturn.indexOf('export') === -1 ||
              beforeReturn.indexOf('private') !== -1) {
-                
-                curlyCount += (line.match(/{/g) || []).length;
-                curlyCount -= (line.match(/}/g) || []).length;
+                updateCurlyCount(line);
                 continue;
             };
             
@@ -74,8 +93,7 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
             return {data: signature};
         };
 
-        curlyCount += (line.match(/{/g) || []).length;
-        curlyCount -= (line.match(/}/g) || []).length;
+        updateCurlyCount(line);
     };
     return {error: `Function ${name} not found`};
 };

@@ -130,9 +130,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 									func.error, vscode.DiagnosticSeverity.Error);
 									console.log(func.error);
 						} else if (func.data) {
-							functionSignatures.add(func.data as Signature);
+							// functionSignatures.add(func.data as Signature);
 							functionNames.add(name.trim());
-							console.log(func.data);
 						};
 					}
 				} else if ( prelines[i].indexOf('*') !== -1) {
@@ -148,30 +147,37 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 						const functions  = funcList.data as Signature[];
 						functionSignatures = new Set([...functionSignatures, ...functions]);
 						functionNames = new Set([...functionNames, ...functions.map(f => f.ident)]);
-					} else {
-						// we are looking from Class names between 'import' and 'from'
-						const classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
-						const classNames = classList.split(',');
-						for (const name of classNames) {
-							const classData: LanguageData = extractClassText(needsFile.toString(), name.trim());
-							if (classData.error) {
+				} 					} else {
+					// we are looking from Class names between 'import' and 'from'
+					const classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
+					const classNames = classList.split(',');
+					for (const name of classNames) {
+						const classData: LanguageData = extractClassText(needsFile.toString(), name.trim());
+						if (classData.error) {
+							let diag : vscode.Diagnostic = new vscode.Diagnostic(
+								new vscode.Range(
+									new vscode.Position(i, 0),
+									new vscode.Position(i, prelines[i].length)),
+									classData.error, vscode.DiagnosticSeverity.Error);
+									console.log(classData.error);
+						} else if (classData.data) {
+							const classData2 = classData.data as string;
+							const classType = createTypeFromClass(name.trim(), classData2, typeList);
+							if (classType) {
+								typeList.push(classType);
+								typeNames.add(name.trim());
+								variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
+							} else {
+								console.log('Could not create type from class');
 								let diag : vscode.Diagnostic = new vscode.Diagnostic(
 									new vscode.Range(
 										new vscode.Position(i, 0),
 										new vscode.Position(i, prelines[i].length)),
-										classData.error, vscode.DiagnosticSeverity.Error);
-							} else if (classData.data) {
-								const classData2 = classData.data as string;
-								const classType = createTypeFromClass(name.trim(), classData2, typeList);
-								if (classType) {
-									typeList.push(classType);
-									typeNames.add(name.trim());
-									variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
-								}
-							};
-						}
-					};
-				}
+										'Could not create type from class', vscode.DiagnosticSeverity.Error);
+							}
+						};
+					}
+				};
 			}
 			} else {
 				vscode.window.showErrorMessage('No workspace found');
@@ -251,9 +257,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
             if (match){
                 const identifier = match[1];
 				variableNames.add(identifier);
-                //console.log(`before shift: ${line}`);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-                //console.log(`after shift: ${testLine} shift: ${shift}`);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclarationWithoutValue);
             }
@@ -368,8 +372,6 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 						const commentLine = lines[k];
 						comment.appendMarkdown(commentLine);
 					};
-
-					console.log(`comment: ${comment}`);
 					sig.doc = comment;
 				};
 			}
