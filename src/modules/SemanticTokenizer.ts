@@ -205,6 +205,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 									variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
 									functionNames = new Set([...functionNames, ...classType.functions.map(f => f.ident)]);
 									functionSignatures = new Set([...functionSignatures, ...classType.functions]);
+									console.log(`Added class ${name.trim()} with ${classType.symbols.length} variables and ${classType.functions.length} functions`)
 								}
 							};
 						}

@@ -167,6 +167,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 								typeList.push(classType);
 								typeNames.add(name.trim());
 								variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
+								functionNames = new Set([...functionNames, ...classType.symbols.map(s => s.ident)]);
+								functionSignatures = new Set([...functionSignatures, ...classType.functions]);
 							} else {
 								console.log('Could not create type from class');
 								let diag : vscode.Diagnostic = new vscode.Diagnostic(
