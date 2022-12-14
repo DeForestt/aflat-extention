@@ -1,4 +1,5 @@
-export const RETURN_TYPES = [
+import { Type } from './Parsing/Parser';
+export const RETURN_TYPES: string[] = [
     'void',
     'any',
     'int',
@@ -11,6 +12,12 @@ export const RETURN_TYPES = [
     'long',
     'generic',
 ];
+
+export const TYPES: Type[] = RETURN_TYPES.map((type: string) => ({
+    ident: type,
+    functions: [],
+    symbols: [],
+}));
 
 export const CONNECTING_CHAR_REGEX = /[a-zA-Z0-9_]/;
 export const NOT_CONNECTING_CHAR_REGEX = /[^a-zA-Z0-9_]/;

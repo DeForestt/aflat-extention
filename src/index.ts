@@ -5,6 +5,7 @@ import { subscribeToDocumentChanges } from './modules/ErrorChecker';
 import { AflatSignatureHelpProvider } from './modules/SignatureHelpProvider';
 
 export function activate(context: vscode.ExtensionContext) {
+	console.log('Congratulations, your extension "aflat" is now active!');
 	const names : NameSets = {
 		typeNames: new Set(),
 		functionNames: new Set(),

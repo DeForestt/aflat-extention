@@ -1,6 +1,8 @@
+import { TYPES } from './../Constents';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createTypeFromClass, extractFunction, extractFunctions, LanguageData, extractClassText } from './LanguageTools';
 
 export interface Signature {
 	ident: string;
@@ -28,6 +30,7 @@ export interface NameSets {
 	nameSpaceNames: Set<string>;
 	functionSignatures?: Set<Signature>;
 	moduleNameSpaces?: Map<string, string>;
+	typeList?: Type[];
 }
 
 
@@ -38,6 +41,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 	let nameSpaceNames = new Set<string>();
 	let functionSignatures = new Set<Signature>();
 	let moduleNameSpaces = new Map<string, string>();
+	let typeList: Type[] = TYPES;
 
 	const prelines = text.split(/\r\n|\r|\n/);
 	let lines = prelines;
@@ -110,22 +114,64 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			if (!needsDir.endsWith('.af')) uri = uri + '.af';
 
 			if (fs.existsSync(uri)){
-			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			let needsNameSets : NameSets = {
-				typeNames: new Set<string>(),
-				functionNames: new Set<string>(),
-				variableNames: new Set<string>(),
-				nameSpaceNames: new Set<string>()
-			};
-			if ( NameSetsMemo.has(uri) === false ) {
-				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), needsDir);
-				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
-				functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
-			}
+				const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
 
+				if ( prelines[i].indexOf('{')!== -1 && prelines[i].indexOf('}')!== -1) {
+					// we are looking for functions
+					const functionList = prelines[i].substring(prelines[i].indexOf('{') + 1, prelines[i].lastIndexOf('}'));
+					const fNames = functionList.split(',');
+					for (const name of fNames) {
+					    const func: LanguageData = extractFunction(needsFile.toString(), name.trim(), moduleName, true);
+						if (func.error) {
+							let diag : vscode.Diagnostic = new vscode.Diagnostic(
+								new vscode.Range(
+									new vscode.Position(i, 0),
+									new vscode.Position(i, prelines[i].length)),
+									func.error, vscode.DiagnosticSeverity.Error);
+									console.log(func.error);
+						} else if (func.data) {
+							functionSignatures.add(func.data as Signature);
+							functionNames.add(name.trim());
+							console.log(func.data);
+						};
+					}
+				} else if ( prelines[i].indexOf('*') !== -1) {
+					// we are looking for all functions
+					const funcList: LanguageData = extractFunctions(needsFile.toString(), moduleName, true);
+					if (funcList.error) {
+						let diag : vscode.Diagnostic = new vscode.Diagnostic(
+							new vscode.Range(
+								new vscode.Position(i, 0),
+								new vscode.Position(i, prelines[i].length)),
+								funcList.error, vscode.DiagnosticSeverity.Error);
+					} else if (funcList.data) {
+						const functions  = funcList.data as Signature[];
+						functionSignatures = new Set([...functionSignatures, ...functions]);
+						functionNames = new Set([...functionNames, ...functions.map(f => f.ident)]);
+					} else {
+						// we are looking from Class names between 'import' and 'from'
+						const classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
+						const classNames = classList.split(',');
+						for (const name of classNames) {
+							const classData: LanguageData = extractClassText(needsFile.toString(), name.trim());
+							if (classData.error) {
+								let diag : vscode.Diagnostic = new vscode.Diagnostic(
+									new vscode.Range(
+										new vscode.Position(i, 0),
+										new vscode.Position(i, prelines[i].length)),
+										classData.error, vscode.DiagnosticSeverity.Error);
+							} else if (classData.data) {
+								const classData2 = classData.data as string;
+								const classType = createTypeFromClass(name.trim(), classData2, typeList);
+								if (classType) {
+									typeList.push(classType);
+									typeNames.add(name.trim());
+									variableNames = new Set([...variableNames, ...classType.symbols.map(s => s.ident)]);
+								}
+							};
+						}
+					};
+				}
 			}
 			} else {
 				vscode.window.showErrorMessage('No workspace found');
@@ -459,7 +505,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 	}
 
 	// return the sets
-	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces};
+	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces, typeList};
 }
 
 export default getSets;
