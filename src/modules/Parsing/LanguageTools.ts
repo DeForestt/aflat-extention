@@ -29,6 +29,7 @@ const removeSingleQuotedStrings  = (line: string): string => {
  * Extracts the function signature with a given name from some text.
  */
 const extractFunction = (text: string, name: string, moduleName: string, exportsOnly?: boolean): LanguageData => {
+    text += '\n';
     const lines = text.split('\n');
     let curlyCount = 0;
 
@@ -102,6 +103,7 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
  * Extracts the full text of a given class from some text.
  */
 const extractClassText = (text: string, name: string): LanguageData => {
+    text += '\n';
     const lines = text.split('\n');
     let curlyCount = 0;
     let classText = '';
@@ -146,6 +148,7 @@ const extractClassText = (text: string, name: string): LanguageData => {
  * Extracts all of the variable, symbols in some text. ie: ...<access> <type> <symbol>...;
  */
 const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
+    text += '\n';
     const lines = text.split('\n');
     const symbols: Symbol[] = [];
     let curlyCount = 0;
@@ -209,6 +212,7 @@ const extractSymbols = (text: string, typeList: Type[]): LanguageData => {
  * ie: ...<access> <returnType> <functionName>(<args>)...;
  */
 const extractFunctions = (text: string, moduleName: string, exportsOnly?: boolean): LanguageData => {
+    text += '\n';
     const lines = text.split('\n');
     const functions: Signature[] = [];
     let curlyCount = 0;
