@@ -96,7 +96,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			}
 		}
 
-		if (prelines[i].trim().startsWith("import")){
+		if (prelines[i].trim().startsWith("import")) {
 			const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
 			const work = vscode.workspace.workspaceFolders;
 			if (work !== undefined) {
