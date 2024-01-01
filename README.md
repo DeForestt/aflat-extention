@@ -1,65 +1,43 @@
-# aflat README
+# AFlat Extension for Visual Studio Code
 
-This is the README for your extension "aflat". After writing up a brief description, we recommend including the following sections.
+This extension, named "AFlat", is designed for the AFlat programming language, providing enhanced support and features within Visual Studio Code.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Syntax Highlighting**: Leveraging the `aflat.tmLanguage.json`, the extension offers syntax highlighting for AFlat language files, making it easier to read and write code.
+- **Semantic Tokenization**: The `SemanticTokenizer.ts` module provides semantic tokenization, which helps in understanding the code structure and context.
+- **Error Checking**: The `ErrorChecker.ts` module helps in identifying and highlighting potential errors in the code.
+- **Signature Help**: With `SignatureHelpProvider.ts`, the extension offers signature help for functions, improving the coding experience.
+- **Command Integration**: The extension integrates commands like `aflat.run`, `aflat.test`, and `aflat.build` into the VS Code editor, allowing for quick actions directly from the editor.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Visual Studio Code version 1.61.0 or higher.
+- Dependencies are managed via `package.json`, ensuring easy setup and configuration.
+
+## Installation and Setup
+
+1. Clone the repository or download the extension package.
+2. Follow the instructions in `vsc-extension-quickstart.md` for setting up the extension in Visual Studio Code.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+This extension contributes to the following settings:
 
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+- `aflat.stddir`: Specifies the folder path containing the tsserver and lib*.d.ts files to use.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Refer to the `CHANGELOG.md` for known issues and updates on bug fixes.
 
-## Release Notes
+## Contributing
 
-Users appreciate release notes as you update your extension.
+Contributions to the AFlat extension are welcome. Please refer to the repository's guidelines for contributing.
 
-### 1.0.0
+## License
 
-Initial release of ...
+[Specify the license or link to it]
 
-### 1.0.1
+---
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Note**: This is a template based on the current repository structure and content. You may need to adjust or add more details specific to the AFlat extension.
