@@ -344,7 +344,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		};
 
 		// search the line a function declaration ie int foo(int a, int b)
-		const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,\*]*)\)/);
+		const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?\*]*)\)/);
 		if (functionDeclaration) {
 			const functionName = functionDeclaration[1];
 
@@ -383,7 +383,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		};
 
 		// search the line for a function declaration with overload operator ie int foo<<=>>copy(int a, int b)
-		const opOverloadFunctionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,<>\*]*)\)/);
+		const opOverloadFunctionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,<>?\*]*)\)/);
 		if (opOverloadFunctionDeclaration) {
 			const functionName = opOverloadFunctionDeclaration[1];
 			functionNames.add(functionName);
