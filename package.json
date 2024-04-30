@@ -2,7 +2,7 @@
     "name": "aflat",
     "displayName": "AFlat",
     "description": "A VS Code Extention for an AFlat Project",
-    "publisherName": "aflat",
+    "publisher": "aflat",
     "version": "0.1.0",
     "main": "./out/src/index.js",
     "activationEvents": [
