@@ -146,8 +146,15 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				}
 	
 				if (!needsDir.endsWith('.af')) uri = uri + '.af';
+
+				// check if file exists
+				if (!fs.existsSync(uri)) {
+					// remove the .af extension
+					uri = uri.substring(0, uri.length - 3);
+					uri = uri + '/mod.af';
+				};
 	
-				if (fs.existsSync(uri)){
+				if (fs.existsSync(uri)) {
 					const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
 	
 					if ( prelines[i].indexOf('{')!== -1 && prelines[i].indexOf('}')!== -1) {
