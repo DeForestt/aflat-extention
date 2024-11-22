@@ -40,7 +40,7 @@ export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.Diagnost
         }
     }
 
-    // errorList.set(doc.uri, result);
+    errorList.set(doc.uri, result);
 }
 
 export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, Diags: vscode.DiagnosticCollection, names : NameSets): void => {
