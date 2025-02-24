@@ -418,7 +418,72 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			}
 
 			functionSignatures.add(sig);
-		}	
+		}
+
+				// Match `fn functionName(type1 param1, type2 param2) -> returnType {`
+		const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+
+			// Match the new function syntax
+			const functionMatch = line.match(functionRegex);
+			if (functionMatch) {
+				const functionName = functionMatch[1];
+				const functionArgs = functionMatch[2];
+				let returnType = functionMatch[3] || "void"; // Default to void if not present
+
+				// If the return type has `?`, wrap it in Option<T>
+				if (returnType.endsWith("?")) {
+					returnType = `Option<${returnType.slice(0, -1)}>`;
+				}
+
+				// Parse C-style parameters: "type1 param1, type2 param2"
+				const paramList: string[] = [];
+				if (functionArgs.trim()) {
+					const params = functionArgs.split(',').map(p => p.trim());
+					for (const param of params) {
+						const parts = param.split(/\s+/); // Split by space to separate type and name
+						if (parts.length === 2) {
+							paramList.push(`${parts[0]} ${parts[1]}`); // Keep "type name" format
+						} else {
+							console.warn(`Malformed parameter: ${param}`);
+						}
+					}
+				}
+
+				// Build function signature object
+				const sig: Signature = {
+					ident: functionName,
+					params: paramList,
+					moduleName: moduleName,
+					returnType: returnType
+				};
+
+				// Check the line above for documentation comments
+				if (i > 0) {
+					const prevLine = lines[i - 1];
+					if (prevLine.trim().endsWith('*/')) {
+						let comment = new vscode.MarkdownString();
+						let j = i - 1;
+						for (j = i - 1; j >= 0; j--) {
+							if (lines[j].trim().startsWith('/*')) {
+								break;
+							}
+						}
+						for (let k = j; k < i; k++) {
+							const commentLine = lines[k].replace('/*', '').replace('*/', '').replace('*', ' ').trim();
+							comment.appendMarkdown(commentLine);
+						};
+						sig.doc = comment;
+					};
+				}
+
+				// Add function name and signature to known lists
+				functionNames.add(functionName);
+				functionSignatures.add(sig);
+			}
+		}
 
 
 		// search the line for variable declarations with a type
