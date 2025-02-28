@@ -270,13 +270,48 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		this.NameSets.functionSignatures = functionSignatures;
 		this.NameSets.moduleNameSpaces = moduleNameSpaces;
 
+		// Track multi-line string ranges
+		const multiLineStrings: { start: number; end: number}[] = [];
+		let inMultiLineString = false;
+		let multiLineStart = -1;
+		let multilineIndex = [];
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+
+			for (let j = 0; j < line.length; j++) {
+				if (line[j] === '~') {
+					if (!inMultiLineString) {
+						// Start a new multi-line string
+						inMultiLineString = true;
+						multiLineStart = i; // Record start line
+					} else {
+						// Close the multi-line string
+						inMultiLineString = false;
+						multiLineStrings.push({ start: multiLineStart, end: i});
+					}
+				}
+			}
+		}
+
+
+
+
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 			interface rangeStr{
 				start: number;
-				end: number;
+				end: number;	
 			}
 			const stringRanges = new Set<rangeStr>();
+					// Add multi-line string ranges to stringRanges
+
+			for (const range of multiLineStrings) {
+				if (range.start <= i && range.end >= i) {
+					stringRanges.add({start: 0, end: line.length});
+					break;
+				}
+			}	
 
 
 			// sliding window to find all double quoted strings

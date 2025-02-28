@@ -119,7 +119,7 @@ const extractClassText = (text: string, name: string): LanguageData => {
         if (!started && line.indexOf(name) !== -1 && curlyCount === 0) {
             // check the word before the line for 'class'
             const beforeClass = line.substring(0, line.indexOf(name)).trim().split(' ').pop();
-            if (beforeClass !== 'class' && beforeClass !== 'enum') {
+            if (beforeClass !== 'class' && beforeClass !== 'enum' && beforeClass !== 'transform') {
                 updateCurlyCount(line);
                 continue;
             };
@@ -142,7 +142,6 @@ const extractClassText = (text: string, name: string): LanguageData => {
 
     return {error: `Class ${name} not found`};
 };
-
 
 /*
  * Extracts all of the variable, symbols in some text. ie: ...<access> <type> <symbol>...;

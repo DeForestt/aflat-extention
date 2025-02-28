@@ -420,9 +420,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			functionSignatures.add(sig);
 		}
 
-				// Match `fn functionName(type1 param1, type2 param2) -> returnType {`
+		// Match `fn functionName(type1 param1, type2 param2) -> returnType {`
 		const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
-
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 
@@ -573,6 +572,14 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 			}
 		}
+
+		// match `transform identifier` and add it to the classes
+		const transformMatch = line.match(/transform\s+([\w\d_]+)/);
+		if (transformMatch) {
+			const className = transformMatch[1];
+			typeNames.add(className);
+		}
+
 	}
 
 	// return the sets
