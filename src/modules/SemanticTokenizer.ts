@@ -47,7 +47,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 	}
 
     async provideDocumentSemanticTokens(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.SemanticTokens> {
-		const allTokens : IParsedToken[] = await this._parseText(document.getText());
+                const allTokens : IParsedToken[] = await this._parseText(document.getText(), path.dirname(document.uri.fsPath));
 		const builder = new vscode.SemanticTokensBuilder();
 		allTokens.forEach((token : IParsedToken) => {
 			builder.push(token.line, token.startCharacter, token.length, this._encodeTokenType(token.tokenType), this._encodeTokenModifiers(token.tokenModifiers));
@@ -77,12 +77,12 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		return result;
 	}
 
-    private async _parseText(text: string): Promise<IParsedToken[]> {
+    private async _parseText(text: string, dir: string): Promise<IParsedToken[]> {
         const r: IParsedToken[] = [];
 		this.diagnosticList = [];
 		const prelines = text.split(/\r\n|\r|\n/);
 		
-		const names = await getSets(text, new Set(), "main");
+                const names = await getSets(text, new Set(), "main", dir);
 
 		let typeNames = names.typeNames;
 		let functionNames = names.functionNames;
@@ -112,8 +112,9 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				// read the file
 				const work = vscode.workspace.workspaceFolders
 				if (work !== undefined) {
-				const cwd = work[0].uri.fsPath;
-				const uri = path.join(cwd, rootDir, needsDir);
+                                const cwd = work[0].uri.fsPath;
+                                const base = needsDir.startsWith('./') ? dir : path.join(cwd, rootDir);
+                                const uri = path.join(base, needsDir);
 				
 				if (fs.existsSync(uri)){
 				} else { 
@@ -134,8 +135,9 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
 				const work = vscode.workspace.workspaceFolders;
 				if (work !== undefined) {
-				const cwd = work[0].uri.fsPath;
-				let uri = path.join(cwd, rootDir, needsDir);
+                                const cwd = work[0].uri.fsPath;
+                                const base = needsDir.startsWith('./') ? dir : path.join(cwd, rootDir);
+                                let uri = path.join(base, needsDir);
 				if (!needsDir.startsWith('.')){
 					// add the std lib
 					const config = vscode.workspace.getConfiguration('aflat');
@@ -254,7 +256,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 			}
 		}
 
-		const myNames = await getSets(text, new Set(), "main");
+                const myNames = await getSets(text, new Set(), "main", dir);
 		typeNames = new Set([...typeNames, ...myNames.typeNames]);
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
 		variableNames = new Set([...variableNames, ...myNames.variableNames]);

@@ -34,7 +34,7 @@ export interface NameSets {
 }
 
 
-const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : string) : Promise<NameSets> =>{
+const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : string, currentDir = '') : Promise<NameSets> =>{
 	let typeNames = new Set<string>();
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
@@ -62,8 +62,9 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			// read the file
 			const work = vscode.workspace.workspaceFolders
 			if (work !== undefined) {
-			const cwd = work[0].uri.fsPath;
-			const uri = path.join(cwd, rootDir, needsDir);
+                        const cwd = work[0].uri.fsPath;
+                        const base = needsDir.startsWith('./') ? currentDir : path.join(cwd, rootDir);
+                        const uri = path.join(base, needsDir);
 			
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
@@ -75,7 +76,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			};
 			if ( NameSetsMemo.has(uri) ) {
 			} else{
-				needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
+                                needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName, path.dirname(uri));
 				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
@@ -100,8 +101,9 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			const needsDir = prelines[i].substring(prelines[i].indexOf('\"') + 1, prelines[i].lastIndexOf('\"'));
 			const work = vscode.workspace.workspaceFolders;
 			if (work !== undefined) {
-			const cwd = work[0].uri.fsPath;
-			let uri = path.join(cwd, rootDir, needsDir);
+                        const cwd = work[0].uri.fsPath;
+                        const base = needsDir.startsWith('./') ? currentDir : path.join(cwd, rootDir);
+                        let uri = path.join(base, needsDir);
 			if (!needsDir.startsWith('.')){
 				// add the std lib
 				const config = vscode.workspace.getConfiguration('aflat');
@@ -207,7 +209,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 					};
 					if ( NameSetsMemo.has(uri) ) {
 					} else{
-						needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName);
+                                                needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName, path.dirname(uri));
 						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
 						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
 						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
