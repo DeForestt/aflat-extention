@@ -35,7 +35,7 @@
 			},
 			{
 				"name":"storage.modifier.aflat",
-				"match": "\\b(public|private|static|const|mutable|safe|dynamic)\\b"
+				"match": "\\b(public|private|static|const|mutable|safe|dynamic|immutable|padantic)\\b"
 			},
 			{
 				"name":"storage.type.aflat",
@@ -43,7 +43,7 @@
 			},
 			{
 				"name": "variable",
-				"match": "\\b(true|false|NULL)\\b"
+				"match": "\\b(true|false|NULL|my)\\b"
 			},
 			{
 				"name": "keyword.operator.aflat",
