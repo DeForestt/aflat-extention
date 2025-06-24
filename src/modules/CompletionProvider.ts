@@ -55,6 +55,25 @@ export class AflatCompletionProvider implements vscode.CompletionItemProvider {
         const vars = variablesInScope(lines, position.line);
 
         const items: vscode.CompletionItem[] = [];
+
+        const linePrefix = document.lineAt(position).text.substring(0, position.character);
+        const memberMatch = linePrefix.match(/([\w\d_]+)(?:\.|::)$/);
+        if (memberMatch && names.variableTypes) {
+            const varName = memberMatch[1];
+            const varType = names.variableTypes.get(varName);
+            if (varType && names.typeList) {
+                const typeInfo = names.typeList.find(t => t.ident === varType);
+                if (typeInfo) {
+                    typeInfo.symbols.forEach(sym => {
+                        items.push(new vscode.CompletionItem(sym.ident, vscode.CompletionItemKind.Field));
+                    });
+                    typeInfo.functions.forEach(fn => {
+                        items.push(new vscode.CompletionItem(fn.ident, vscode.CompletionItemKind.Method));
+                    });
+                }
+            }
+        }
+
         vars.forEach(v => {
             items.push(new vscode.CompletionItem(v, vscode.CompletionItemKind.Variable));
         });

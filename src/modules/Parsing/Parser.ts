@@ -24,21 +24,23 @@ export interface Symbol {
 };
 
 export interface NameSets {
-	typeNames: Set<string>;
-	functionNames: Set<string>;
-	variableNames: Set<string>;
-	nameSpaceNames: Set<string>;
-	functionSignatures?: Set<Signature>;
-	moduleNameSpaces?: Map<string, string>;
-	typeList?: Type[];
+        typeNames: Set<string>;
+        functionNames: Set<string>;
+        variableNames: Set<string>;
+        variableTypes?: Map<string, string>;
+        nameSpaceNames: Set<string>;
+        functionSignatures?: Set<Signature>;
+        moduleNameSpaces?: Map<string, string>;
+        typeList?: Type[];
 }
 
 
 const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : string, currentDir = '') : Promise<NameSets> =>{
         let typeNames = new Set<string>();
         let genericNames = new Set<string>();
-	let functionNames = new Set<string>();
-	let variableNames = new Set<string>();
+        let functionNames = new Set<string>();
+        let variableNames = new Set<string>();
+        let variableTypes = new Map<string, string>();
 	let nameSpaceNames = new Set<string>();
 	let functionSignatures = new Set<Signature>();
 	let moduleNameSpaces = new Map<string, string>();
@@ -69,20 +71,22 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			
 			if (fs.existsSync(uri)){
 			const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(uri));
-			let needsNameSets : NameSets = {
-				typeNames: new Set<string>(),
-				functionNames: new Set<string>(),
-				variableNames: new Set<string>(),
-				nameSpaceNames: new Set<string>(),
-			};
+                        let needsNameSets : NameSets = {
+                                typeNames: new Set<string>(),
+                                functionNames: new Set<string>(),
+                                variableNames: new Set<string>(),
+                                variableTypes: new Map<string, string>(),
+                                nameSpaceNames: new Set<string>(),
+                        };
 			if ( NameSetsMemo.has(uri) ) {
 			} else{
                                 needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName, path.dirname(uri));
-				typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-				functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-				variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-				nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
-				functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
+                                typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                                functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                                variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                                needsNameSets.variableTypes?.forEach((v, k) => variableTypes.set(k, v));
+                                nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                                functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
 			}
 
 			} else { 
@@ -201,21 +205,23 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 					const uri = path.join(libPath, needsDir);
 					// check if file exists
 					if (fs.existsSync(uri)) {
-					const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
-					let needsNameSets : NameSets = {
-						typeNames: new Set<string>(),
-						functionNames: new Set<string>(),
-						variableNames: new Set<string>(),
-						nameSpaceNames: new Set<string>()
-					};
+                                        const needsFile = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(uri)));
+                                        let needsNameSets : NameSets = {
+                                                typeNames: new Set<string>(),
+                                                functionNames: new Set<string>(),
+                                                variableNames: new Set<string>(),
+                                                variableTypes: new Map<string, string>(),
+                                                nameSpaceNames: new Set<string>()
+                                        };
 					if ( NameSetsMemo.has(uri) ) {
 					} else{
                                                 needsNameSets = await getSets(needsFile.toString(), new Set([...NameSetsMemo, uri]), moduleName, path.dirname(uri));
-						typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
-						functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
-						variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
-						nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
-						functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
+                                                typeNames = new Set([...typeNames, ...needsNameSets.typeNames]);
+                                                functionNames = new Set([...functionNames, ...needsNameSets.functionNames]);
+                                                variableNames = new Set([...variableNames, ...needsNameSets.variableNames]);
+                                                needsNameSets.variableTypes?.forEach((v, k) => variableTypes.set(k, v));
+                                                nameSpaceNames = new Set([...nameSpaceNames, ...needsNameSets.nameSpaceNames]);
+                                                functionSignatures = new Set([...functionSignatures, ...(needsNameSets.functionSignatures? needsNameSets.functionSignatures : new Set<Signature>())]);
 					}
 					} else {
 						vscode.window.showErrorMessage('File not found: ' + uri);
@@ -250,14 +256,16 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
                 }
 
 		// search the line a variable declaration
-		const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
+                const variableDeclaration = /(any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
         while (match) {
             if (match){
-                const identifier = match[1];
-				variableNames.add(identifier);
+                const vType = match[1];
+                const identifier = match[2];
+                variableNames.add(identifier);
+                variableTypes.set(identifier, vType);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclaration);
@@ -267,14 +275,16 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// match a declaration that looks 
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+                const variableDeclarationWithoutValue = /(any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
         while (match) {
             if (match){
-                const identifier = match[1];
-				variableNames.add(identifier);
+                const vType = match[1];
+                const identifier = match[2];
+                variableNames.add(identifier);
+                variableTypes.set(identifier, vType);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclarationWithoutValue);
@@ -503,19 +513,20 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// search the line for variable declarations with a type
                 for (const typeName of typeNames) {
                         const variableDeclaration = new RegExp(`(?:${typeName})(?:\\s*::\\s*<[^>]+>|\\s*<[^>]+>)?\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
-			let testLine = line;
-			let shift = 0;
-			let match = testLine.match(variableDeclaration);
-			while (match) {
-				if (match){
-					const identifier = match[1];
-					variableNames.add(identifier);
-					//console.log(`before shift: ${line}`);
-					testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
-					//console.log(`after shift: ${testLine} shift: ${shift}`);
-					shift = testLine.indexOf(identifier) + shift + identifier.length;
-					match = testLine.match(variableDeclaration);
-				}
+                        let testLine = line;
+                        let shift = 0;
+                        let match = testLine.match(variableDeclaration);
+                        while (match) {
+                                if (match){
+                                        const identifier = match[1];
+                                        variableNames.add(identifier);
+                                        variableTypes.set(identifier, typeName);
+                                        //console.log(`before shift: ${line}`);
+                                        testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
+                                        //console.log(`after shift: ${testLine} shift: ${shift}`);
+                                        shift = testLine.indexOf(identifier) + shift + identifier.length;
+                                        match = testLine.match(variableDeclaration);
+                                }
 			}
 		}
 
@@ -598,7 +609,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 	}
 
 	// return the sets
-	return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces, typeList};
+        return {typeNames, functionNames, variableNames, nameSpaceNames, functionSignatures, moduleNameSpaces, typeList, variableTypes};
 }
 
 export default getSets;

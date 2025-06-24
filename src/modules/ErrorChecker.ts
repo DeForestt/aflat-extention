@@ -40,6 +40,28 @@ export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.Diagnost
         }
     }
 
+    const lines = text.split(/\r\n|\r|\n/);
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const varMatch = line.trim().match(/^(\w+)(?:\s*::\s*<[^>]+>|<[^>]+>)?\s+(\w+)\s*(?:[=;])/);
+        if (varMatch) {
+            const t = varMatch[1];
+            if (!nameSets.typeNames.has(t)) {
+                const range = new vscode.Range(new vscode.Position(i, line.indexOf(t)), new vscode.Position(i, line.indexOf(t) + t.length));
+                result.push(new vscode.Diagnostic(range, `Unknown type "${t}"`, vscode.DiagnosticSeverity.Error));
+            }
+        }
+
+        const fnMatch = line.trim().match(/^(\w+)(?:\s*::\s*<[^>]+>|<[^>]+>)?\s+(\w+)\s*\(/);
+        if (fnMatch) {
+            const t = fnMatch[1];
+            if (!nameSets.typeNames.has(t)) {
+                const range = new vscode.Range(new vscode.Position(i, line.indexOf(t)), new vscode.Position(i, line.indexOf(t) + t.length));
+                result.push(new vscode.Diagnostic(range, `Unknown return type "${t}"`, vscode.DiagnosticSeverity.Error));
+            }
+        }
+    }
+
     errorList.set(doc.uri, result);
 }
 
