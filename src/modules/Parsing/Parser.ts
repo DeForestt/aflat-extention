@@ -35,7 +35,8 @@ export interface NameSets {
 
 
 const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : string, currentDir = '') : Promise<NameSets> =>{
-	let typeNames = new Set<string>();
+        let typeNames = new Set<string>();
+        let genericNames = new Set<string>();
 	let functionNames = new Set<string>();
 	let variableNames = new Set<string>();
 	let nameSpaceNames = new Set<string>();
@@ -233,8 +234,20 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		}
 	}
 
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
+        for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // capture generic type declarations like `types(T,U)`
+                const genericMatch = line.match(/\btypes\(([^\)]+)\)/);
+                if (genericMatch) {
+                        genericMatch[1].split(',').forEach(g => {
+                                const gName = g.trim();
+                                if (gName) {
+                                        genericNames.add(gName);
+                                        typeNames.add(gName);
+                                }
+                        });
+                }
 
 		// search the line a variable declaration
 		const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
@@ -488,8 +501,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 
 		// search the line for variable declarations with a type
-		for (const typeName of typeNames) {
-			const variableDeclaration = new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
+                for (const typeName of typeNames) {
+                        const variableDeclaration = new RegExp(`(?:${typeName})(?:\\s*::\\s*<[^>]+>|\\s*<[^>]+>)?\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
 			let testLine = line;
 			let shift = 0;
 			let match = testLine.match(variableDeclaration);
@@ -508,7 +521,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+			const functionDeclaration = line.match(new RegExp(`(?:${typeName})(?:\s*::\s*<[^>]+>|\s*<[^>]+>)?\s+([\w\d_]+)\s*\(([\w\d_\s,<>?&\*]*)`));
 			if (functionDeclaration) {
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
@@ -556,7 +569,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// search the line for function declarations with a type and overload operator
 		for (const typeName of typeNames) {
 
-			const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+		const fdec = line.match(new RegExp(`(?:${typeName})(?:\s*::\s*<[^>]+>|\s*<[^>]+>)?\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,<>?&\*]*)`));
 			if (fdec) {
 				const functionName = fdec[1];
 				functionNames.add(functionName);

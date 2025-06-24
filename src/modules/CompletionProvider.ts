@@ -14,6 +14,7 @@ function variablesInScope(lines: string[], lineNumber: number): Set<string> {
     const scopeStack: Set<string>[] = [new Set()];
     const varDecl = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=.*/g;
     const varDeclNoValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+    const customDecl = /([\w\d_]+)(?:\s*::\s*<[^>]+>|<[^>]+>)?\s+([\w\d_]+)\s*(?:[=;\]\),])/g;
 
     for (let i = 0; i <= lineNumber; i++) {
         const line = cleanLine(lines[i]);
@@ -26,6 +27,10 @@ function variablesInScope(lines: string[], lineNumber: number): Set<string> {
             scopeStack[scopeStack.length - 1].add(match[1]);
         }
         varDeclNoValue.lastIndex = 0;
+        while ((match = customDecl.exec(line)) !== null) {
+            scopeStack[scopeStack.length - 1].add(match[2]);
+        }
+        customDecl.lastIndex = 0;
         for (const ch of line) {
             if (ch === '{') {
                 scopeStack.push(new Set());
