@@ -7,13 +7,14 @@ import { AflatCompletionProvider } from './modules/CompletionProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "aflat" is now active!');
-	const names : NameSets = {
-		typeNames: new Set(),
-		functionNames: new Set(),
-		variableNames: new Set(),
-		nameSpaceNames: new Set(),
-		functionSignatures: new Set()
-	};
+        const names : NameSets = {
+                typeNames: new Set(),
+                functionNames: new Set(),
+                variableNames: new Set(),
+                variableTypes: new Map(),
+                nameSpaceNames: new Set(),
+                functionSignatures: new Set()
+        };
 	const TokenDiagnositcs : vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection('SemanticTokenizer');
 	const ErrorDiagnostics : vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection('ErrorChecker');
 	const SignatureHelp : vscode.SignatureHelp = new vscode.SignatureHelp();

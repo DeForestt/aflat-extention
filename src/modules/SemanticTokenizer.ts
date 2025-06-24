@@ -103,6 +103,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 
                 const varDecl = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=.*/g;
                 const varDeclNoValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+                const customDecl = /([\w\d_]+)(?:\s*::\s*<[^>]+>|<[^>]+>)?\s+([\w\d_]+)\s*(?:[=;\]\),])/g;
                 const scopeStack: Set<string>[] = [new Set()];
 
 
@@ -274,16 +275,17 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 		functionNames = new Set([...functionNames, ...myNames.functionNames]);
 		variableNames = new Set([...variableNames, ...myNames.variableNames]);
 		nameSpaceNames = new Set([...nameSpaceNames, ...myNames.nameSpaceNames]);
-		functionNames = new Set([...functionNames, ...myNames.functionNames]);
-		moduleNameSpaces = myNames.moduleNameSpaces;
-		functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures? myNames.functionSignatures : []]);
+                functionNames = new Set([...functionNames, ...myNames.functionNames]);
+                moduleNameSpaces = myNames.moduleNameSpaces;
+                functionSignatures = new Set([...functionSignatures, ...myNames.functionSignatures? myNames.functionSignatures : []]);
 
-		this.NameSets.functionNames = functionNames;
-		this.NameSets.variableNames = variableNames;
-		this.NameSets.typeNames = typeNames;
-		this.NameSets.nameSpaceNames = nameSpaceNames;
-		this.NameSets.functionSignatures = functionSignatures;
-		this.NameSets.moduleNameSpaces = moduleNameSpaces;
+                this.NameSets.functionNames = functionNames;
+                this.NameSets.variableNames = variableNames;
+                this.NameSets.typeNames = typeNames;
+                this.NameSets.variableTypes = myNames.variableTypes;
+                this.NameSets.nameSpaceNames = nameSpaceNames;
+                this.NameSets.functionSignatures = functionSignatures;
+                this.NameSets.moduleNameSpaces = moduleNameSpaces;
 
 		// Track multi-line string ranges
 		const multiLineStrings: { start: number; end: number}[] = [];
@@ -428,6 +430,10 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
                                 scopeStack[scopeStack.length - 1].add(match[1]);
                         }
                         varDeclNoValue.lastIndex = 0;
+                        while ((match = customDecl.exec(clean)) !== null) {
+                                scopeStack[scopeStack.length - 1].add(match[2]);
+                        }
+                        customDecl.lastIndex = 0;
                         const currentVars = new Set<string>(variableNames);
                         for (const set of scopeStack) set.forEach(v => currentVars.add(v));
 
