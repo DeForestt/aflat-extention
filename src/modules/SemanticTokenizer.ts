@@ -7,6 +7,15 @@ import getSets from './Parsing/Parser'
 import { NameSets, Signature } from './Parsing/Parser';
 import { lookupService } from 'dns';
 
+const removeStringsAndComments = (line: string): string => {
+    return line
+        .replace(/\/\/.*$/, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/"([^"\\]|\\.)*"/g, '')
+        .replace(/'([^'\\]|\\.)*'/g, '')
+        .replace(/`([^`\\]|\\.)*`/g, '');
+};
+
 const tokenTypes = new Map<string, number>();
 const tokenModifiers = new Map<string, number>();
 
@@ -86,11 +95,15 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 
 		let typeNames = names.typeNames;
 		let functionNames = names.functionNames;
-		let variableNames = names.variableNames;
-		let nameSpaceNames = names.nameSpaceNames;
-		let functionSignatures = names.functionSignatures? names.functionSignatures : new Set<Signature>();
-		let moduleNameSpaces = names.moduleNameSpaces;
-		let typeList = names.typeList;
+                let variableNames = names.variableNames;
+                let nameSpaceNames = names.nameSpaceNames;
+                let functionSignatures = names.functionSignatures? names.functionSignatures : new Set<Signature>();
+                let moduleNameSpaces = names.moduleNameSpaces;
+                let typeList = names.typeList;
+
+                const varDecl = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=.*/g;
+                const varDeclNoValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+                const scopeStack: Set<string>[] = [new Set()];
 
 
 		let rootDir = '';
@@ -389,17 +402,37 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				})
 			};
 
-			// check for /* comments
-			const commentMatch2 = line.match(/\/\*(.*)\*\//);
-			if (commentMatch2) {
-				stringRanges.add({
-					start: line.indexOf(commentMatch2[1]),
-					end: line.indexOf(commentMatch2[1]) + commentMatch2[1].length
-				})
-			}
+                        // check for /* comments
+                        const commentMatch2 = line.match(/\/\*(.*)\*\//);
+                        if (commentMatch2) {
+                                stringRanges.add({
+                                        start: line.indexOf(commentMatch2[1]),
+                                        end: line.indexOf(commentMatch2[1]) + commentMatch2[1].length
+                                })
+                        }
 
-			// search the line for strings in the variable list
-			for(let word of variableNames) {
+                        const clean = removeStringsAndComments(line);
+                        for (const ch of clean) {
+                                if (ch === '{') {
+                                        scopeStack.push(new Set());
+                                } else if (ch === '}') {
+                                        if (scopeStack.length > 1) scopeStack.pop();
+                                }
+                        }
+                        let match: RegExpExecArray | null;
+                        while ((match = varDecl.exec(clean)) !== null) {
+                                scopeStack[scopeStack.length - 1].add(match[1]);
+                        }
+                        varDecl.lastIndex = 0;
+                        while ((match = varDeclNoValue.exec(clean)) !== null) {
+                                scopeStack[scopeStack.length - 1].add(match[1]);
+                        }
+                        varDeclNoValue.lastIndex = 0;
+                        const currentVars = new Set<string>(variableNames);
+                        for (const set of scopeStack) set.forEach(v => currentVars.add(v));
+
+                        // search the line for strings in the variable list
+                        for(let word of currentVars) {
 
 				// sliding window search for word
 				let start = 0;
