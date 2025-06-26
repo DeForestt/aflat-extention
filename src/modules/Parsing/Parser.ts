@@ -151,8 +151,11 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 						functionNames = new Set([...functionNames, ...functions.map(f => f.ident)]);
 				} 					} else {
 					// we are looking from Class names between 'import' and 'from'
-					const classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
-					const classNames = classList.split(',');
+                                        let classList = prelines[i].substring(prelines[i].indexOf('import') + 6, prelines[i].indexOf('from'));
+                                        if (classList.indexOf('{') !== -1) {
+                                                classList = classList.substring(0, classList.indexOf('{'));
+                                        }
+                                        const classNames = classList.split(',');
 					for (const name of classNames) {
 						const classData: LanguageData = extractClassText(needsFile.toString(), name.trim());
 						if (classData.error) {
@@ -237,7 +240,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		const line = lines[i];
 
 		// search the line a variable declaration
-		const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
+        const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)(?:\s*::\s*<[^>]+>)?\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
@@ -254,7 +257,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// match a declaration that looks 
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+        const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)(?:\s*::\s*<[^>]+>)?\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
@@ -488,8 +491,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 
 		// search the line for variable declarations with a type
-		for (const typeName of typeNames) {
-			const variableDeclaration = new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
+                for (const typeName of typeNames) {
+                        const variableDeclaration = new RegExp(`(?:${typeName})(?:\\s*::\\s*<[^>]+>)?\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
 			let testLine = line;
 			let shift = 0;
 			let match = testLine.match(variableDeclaration);
@@ -576,11 +579,19 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		}
 
 		// match `transform identifier` and add it to the classes
-		const transformMatch = line.match(/transform\s+([\w\d_]+)/);
-		if (transformMatch) {
-			const className = transformMatch[1];
-			typeNames.add(className);
-		}
+                const transformMatch = line.match(/transform\s+([\w\d_]+)/);
+                if (transformMatch) {
+                        const className = transformMatch[1];
+                        typeNames.add(className);
+                }
+
+                const typesMatch = line.match(/Types\s*\(([^)]+)\)/);
+                if (typesMatch) {
+                        const namesList = typesMatch[1].split(',').map(n => n.trim());
+                        for (const n of namesList) {
+                                if (n) typeNames.add(n);
+                        }
+                }
 
 	}
 
