@@ -233,8 +233,17 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		}
 	}
 
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
+        for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // capture generic type declarations via types()
+                const typesMatch = line.match(/types\s*\(([^)]+)\)/);
+                if (typesMatch) {
+                        const tnames = typesMatch[1].split(',').map(t => t.trim()).filter(t => t);
+                        for (const t of tnames) {
+                                typeNames.add(t);
+                        }
+                }
 
 		// search the line a variable declaration
 		const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
@@ -488,8 +497,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 
 		// search the line for variable declarations with a type
-		for (const typeName of typeNames) {
-			const variableDeclaration = new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
+                for (const typeName of typeNames) {
+                        const variableDeclaration = new RegExp(`(?:${typeName})(?:\\s*::\\s*<[^>]+>)?\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
 			let testLine = line;
 			let shift = 0;
 			let match = testLine.match(variableDeclaration);
@@ -508,7 +517,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+                        const functionDeclaration = line.match(new RegExp(`(?:${typeName})(?:\s*::\s*<[^>]+>)?\s+([\w\d_]+)\s*\(([\w\d_\s,<>?&\*]*)`));
 			if (functionDeclaration) {
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
