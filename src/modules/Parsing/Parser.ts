@@ -63,7 +63,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			const work = vscode.workspace.workspaceFolders
 			if (work !== undefined) {
                         const cwd = work[0].uri.fsPath;
-                        const base = needsDir.startsWith('./') ? currentDir : path.join(cwd, rootDir);
+                        const base = needsDir.startsWith('.') ? currentDir : path.join(cwd, rootDir);
                         const uri = path.join(base, needsDir);
 			
 			if (fs.existsSync(uri)){
@@ -102,7 +102,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			const work = vscode.workspace.workspaceFolders;
 			if (work !== undefined) {
                         const cwd = work[0].uri.fsPath;
-                        const base = needsDir.startsWith('./') ? currentDir : path.join(cwd, rootDir);
+                        const base = needsDir.startsWith('.') ? currentDir : path.join(cwd, rootDir);
                         let uri = path.join(base, needsDir);
 			if (!needsDir.startsWith('.')){
 				// add the std lib

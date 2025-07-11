@@ -126,7 +126,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				const work = vscode.workspace.workspaceFolders
 				if (work !== undefined) {
                                 const cwd = work[0].uri.fsPath;
-                                const base = needsDir.startsWith('./') ? dir : path.join(cwd, rootDir);
+                                const base = needsDir.startsWith('.') ? dir : path.join(cwd, rootDir);
                                 const uri = path.join(base, needsDir);
 				
 				if (fs.existsSync(uri)){
@@ -149,7 +149,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 				const work = vscode.workspace.workspaceFolders;
 				if (work !== undefined) {
                                 const cwd = work[0].uri.fsPath;
-                                const base = needsDir.startsWith('./') ? dir : path.join(cwd, rootDir);
+                                const base = needsDir.startsWith('.') ? dir : path.join(cwd, rootDir);
                                 let uri = path.join(base, needsDir);
 				if (!needsDir.startsWith('.')){
 					// add the std lib
