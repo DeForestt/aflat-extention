@@ -119,7 +119,7 @@ const extractClassText = (text: string, name: string): LanguageData => {
         if (!started && line.indexOf(name) !== -1 && curlyCount === 0) {
             // check the word before the line for 'class'
             const beforeClass = line.substring(0, line.indexOf(name)).trim().split(' ').pop();
-            if (beforeClass !== 'class' && beforeClass !== 'enum' && beforeClass !== 'transform') {
+            if (beforeClass !== 'class' && beforeClass !== 'enum' && beforeClass !== 'transform' && beforeClass !== 'union') {
                 updateCurlyCount(line);
                 continue;
             };
@@ -304,6 +304,34 @@ const typeFromEnum = (name: string, text: string): Type => {
     };
 };
 
+const typeFromUnion = (name: string, text: string): Type => {
+    const body = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
+    const lines = body.split(/\r?\n/);
+    const variantLines: string[] = [];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('fn') || trimmed.includes(' fn ')) {
+            break;
+        }
+        if (trimmed === '') continue;
+        variantLines.push(trimmed);
+        if (trimmed.includes('fn')) break; // just in case
+    }
+    const variantText = variantLines.join(' ');
+    const variantValues = variantText.split(',');
+    const symbols: Symbol[] = variantValues.map(v => {
+        const clean = v.split(/[(<]/)[0].trim();
+        return {
+            ident: clean,
+            type: { ident: name, functions: [], symbols: [] },
+        };
+    }).filter(s => s.ident !== '');
+
+    const functions = extractFunctions(body, name).data as Signature[];
+
+    return { ident: name, functions, symbols };
+};
+
 /*
  * Creates a type from a class name and a text string.
  */
@@ -314,9 +342,12 @@ const createTypeFromClass = (name: string, text: string, typeList: Type[]): Type
         symbols: [],
     }]);
 
-    if (text.trim().startsWith('enum')) {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('enum')) {
         return typeFromEnum(name, text);
-    };
+    } else if (trimmed.startsWith('union')) {
+        return typeFromUnion(name, text);
+    }
 
     // remove the first and last curly braces
     const useText = text.substring(text.indexOf('{') + 1, text.lastIndexOf('}'));
