@@ -316,34 +316,61 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 			typeNames.add(className);
 		}
 
-		// search the line for an enum declaration
-		const enumDeclaration = line.match(/(?:enum)\s+([\w\d_]+)\s*/);
-		if (enumDeclaration) {
-			const enumName = enumDeclaration[1];
-			//add the enum name to the list of known types
-			typeNames.add(enumName);
+                // search the line for an enum declaration
+                const enumDeclaration = line.match(/(?:enum)\s+([\w\d_]+)\s*/);
+                if (enumDeclaration) {
+                        const enumName = enumDeclaration[1];
+                        //add the enum name to the list of known types
+                        typeNames.add(enumName);
 
-			// loop through the lines until the end of the enum
-			let enumBody = '';
-			for (let j = i + 1; j < lines.length; j++) {
-				const enumLine = lines[j];
-				enumBody += enumLine;
-				if (enumLine.includes('};')) {
-					// remove closing brace and semicolon
-					enumBody = enumBody.replace('};', '');
-					break;
-				}
-			}
-			// remove newlines
-			enumBody = enumBody.replace(/\r?\n|\r/g, '');
-			//split by commas
-			const enumValues = enumBody.split(',');
-			// add each enum value to the list of known variables
-			for (let j = 0; j < enumValues.length; j++) {
-				const enumValue = enumValues[j].trim();
-				variableNames.add(enumValue);
-			};
-		};
+                        // loop through the lines until the end of the enum
+                        let enumBody = '';
+                        for (let j = i + 1; j < lines.length; j++) {
+                                const enumLine = lines[j];
+                                enumBody += enumLine;
+                                if (enumLine.includes('};')) {
+                                        // remove closing brace and semicolon
+                                        enumBody = enumBody.replace('};', '');
+                                        break;
+                                }
+                        }
+                        // remove newlines
+                        enumBody = enumBody.replace(/\r?\n|\r/g, '');
+                        //split by commas
+                        const enumValues = enumBody.split(',');
+                        // add each enum value to the list of known variables
+                        for (let j = 0; j < enumValues.length; j++) {
+                                const enumValue = enumValues[j].trim();
+                                variableNames.add(enumValue);
+                        };
+                };
+
+                // search the line for a union declaration
+                const unionDeclaration = line.match(/(?:union)\s+([\w\d_]+)\s*/);
+                if (unionDeclaration) {
+                        const unionName = unionDeclaration[1];
+                        typeNames.add(unionName);
+
+                        // gather union body similar to enum to capture variant names
+                        let unionBody = '';
+                        for (let j = i + 1; j < lines.length; j++) {
+                                const unionLine = lines[j];
+                                unionBody += unionLine;
+                                if (unionLine.includes('};')) {
+                                        unionBody = unionBody.replace('};', '');
+                                        break;
+                                }
+                        }
+                        unionBody = unionBody.replace(/\r?\n|\r/g, '');
+                        const unionValues = unionBody.split(',');
+                        for (let j = 0; j < unionValues.length; j++) {
+                                let val = unionValues[j].trim();
+                                if (val === '') continue;
+                                // remove generic or parameter list
+                                val = val.split(/[(<]/)[0].trim();
+                                variableNames.add(val);
+                        }
+                }
 
 		// search the line a function declaration ie int foo(int a, int b)
 		const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)/);
