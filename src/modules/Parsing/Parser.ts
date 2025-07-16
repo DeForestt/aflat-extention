@@ -237,19 +237,30 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		const line = lines[i];
 
 		// search the line a variable declaration
-		const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
+                const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
         while (match) {
             if (match){
                 const identifier = match[1];
-				variableNames.add(identifier);
+                                variableNames.add(identifier);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclaration);
             }
         }
+
+                // match template type declarations like types(T, J...)
+                const templateTypeMatch = line.match(/types\s*\(([^\)]*)\)/);
+                if (templateTypeMatch) {
+                        const inner = templateTypeMatch[1];
+                        const params = inner.split(',');
+                        for (const param of params) {
+                                const clean = param.trim().replace(/\.\.\.$/, '');
+                                if (clean) typeNames.add(clean);
+                        }
+                }
 
 		// match a declaration that looks 
 
