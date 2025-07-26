@@ -265,18 +265,24 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// match a declaration that looks 
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+                const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
         while (match) {
             if (match){
                 const identifier = match[1];
-				variableNames.add(identifier);
+                                variableNames.add(identifier);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclarationWithoutValue);
             }
+        }
+
+                const foreachDeclaration = /foreach\s+([\w\d_]+)\s+in/;
+        const foreachMatch = line.match(foreachDeclaration);
+        if (foreachMatch) {
+            variableNames.add(foreachMatch[1]);
         }
 
 		// match 'under'
@@ -384,7 +390,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
                 }
 
 		// search the line a function declaration ie int foo(int a, int b)
-		const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)/);
+                const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&:\*]*)\)/);
 		if (functionDeclaration) {
 			const functionName = functionDeclaration[1];
 
@@ -461,7 +467,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		}
 
 		// Match `fn functionName(type1 param1, type2 param2) -> returnType {`
-		const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
+                const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&:\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 
@@ -546,7 +552,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+                        const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\w\d_\s,<>?&:\*]*)`));
 			if (functionDeclaration) {
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
@@ -594,7 +600,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// search the line for function declarations with a type and overload operator
 		for (const typeName of typeNames) {
 
-			const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+                        const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\w\d_\s,<>?&:\*]*)`));
 			if (fdec) {
 				const functionName = fdec[1];
 				functionNames.add(functionName);
