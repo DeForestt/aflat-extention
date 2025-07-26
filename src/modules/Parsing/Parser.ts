@@ -237,7 +237,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		const line = lines[i];
 
 		// search the line a variable declaration
-                const variableDeclaration = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic|byte)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=\s*(.*)/;
+                const variableDeclaration = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s*([\w\d_]+)\s*=\s*(.*)/;
         let testLine = line;
         let shift = 0;
         let match = testLine.match(variableDeclaration);
@@ -265,7 +265,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// match a declaration that looks 
 
 		// match a variable declaration without a value
-                const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+                const variableDeclarationWithoutValue = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
@@ -532,8 +532,8 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 
 		// search the line for variable declarations with a type
-		for (const typeName of typeNames) {
-			const variableDeclaration = new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
+                for (const typeName of typeNames) {
+                        const variableDeclaration = new RegExp(`(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\\s*(?:${typeName})(?:::<[^>]+>|<[^>]+>)?\\s+([\\w\\d_]+)\\s*(?:[;\\]\\)\\,=])`);
 			let testLine = line;
 			let shift = 0;
 			let match = testLine.match(variableDeclaration);

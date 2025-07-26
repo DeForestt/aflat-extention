@@ -101,8 +101,8 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
                 let moduleNameSpaces = names.moduleNameSpaces;
                 let typeList = names.typeList;
 
-                const varDecl = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=.*/g;
-                const varDeclNoValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+                const varDecl = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s*([\w\d_]+)\s*=.*/g;
+                const varDeclNoValue = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
                 const foreachDecl = /foreach\s+([\w\d_]+)\s+in/g;
                 const scopeStack: Set<string>[] = [new Set()];
 
