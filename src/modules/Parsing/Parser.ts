@@ -390,7 +390,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
                 }
 
 		// search the line a function declaration ie int foo(int a, int b)
-		const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)/);
+                const functionDeclaration = line.match(/(?:any|void|int|adr|char|float|bool|short|byte|long|generic)\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&:\*]*)\)/);
 		if (functionDeclaration) {
 			const functionName = functionDeclaration[1];
 
@@ -467,7 +467,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		}
 
 		// Match `fn functionName(type1 param1, type2 param2) -> returnType {`
-		const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
+                const functionRegex = /fn\s+([\w\d_]+)\s*\(([\w\d_\s<>,?&:\*]*)\)\s*(?:->\s*([\w\d_?]+))?/;
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
 
@@ -552,7 +552,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 
 		// search the line for function declarations with a type
 		for (const typeName of typeNames) {
-			const functionDeclaration = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+                        const functionDeclaration = line.match(new RegExp(`(?:${typeName})\s+([\w\d_]+)\s*\(([\w\d_\s,<>?&:\*]*)`));
 			if (functionDeclaration) {
 				const functionName = functionDeclaration[1];
 				const functionArguments = functionDeclaration[2].split(',');
@@ -600,7 +600,7 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// search the line for function declarations with a type and overload operator
 		for (const typeName of typeNames) {
 
-			const fdec = line.match(new RegExp(`(?:${typeName})\\s+([\\w\\d_]+)\\s*(?:<<.+>>)\\s*\\(([\\w\\d_\\s,<>?&\*]*)`));
+                        const fdec = line.match(new RegExp(`(?:${typeName})\s+([\w\d_]+)\s*(?:<<.+>>)\s*\(([\w\d_\s,<>?&:\*]*)`));
 			if (fdec) {
 				const functionName = fdec[1];
 				functionNames.add(functionName);
