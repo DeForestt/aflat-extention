@@ -2,6 +2,15 @@ import { AtomType, atomize } from './Atomizer';
 import * as vscode from 'vscode';
 import { NameSets } from './Parsing/Parser';
 
+const removeStringsAndComments = (line: string): string => {
+    return line
+        .replace(/\/\/.*$/, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/"([^"\\]|\\.)*"/g, '')
+        .replace(/'([^'\\]|\\.)*'/g, '')
+        .replace(/`([^`\\]|\\.)*`/g, '');
+};
+
 const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long', 'generic'
     , 'if', 'else', 'while', 'for', 'foreach', 'signs', 'return', 'new', 'as', 'needs', 'root',
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
@@ -14,14 +23,49 @@ export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.Diagnost
     if (nameSets.functionNames.size === 0 && nameSets.variableNames.size === 0 && nameSets.typeNames.size === 0 && nameSets.nameSpaceNames.size === 0) return;
     const result : vscode.Diagnostic[] = [];
     const text = doc.getText();
+    const lines = text.split(/\r\n|\r|\n/);
+    const varDecl = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s*([\w\d_]+)\s*=.*/g;
+    const varDeclNoValue = /(?:public|private|static|const|mutable|safe|dynamic|immutable|padantic)?\s*(?:any|let|int|adr|byte|char|float|bool|short|long|generic|vector)\s*(?:\[\d+\])*\s*(?:::<[^>]+>|<[^>]+>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+    const foreachDecl = /foreach\s+([\w\d_]+)\s+in/g;
+    const scopeStack: Set<string>[] = [new Set()];
+    const varsPerLine: Set<string>[] = [];
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const clean = removeStringsAndComments(line);
+        for (const ch of clean) {
+            if (ch === '{') {
+                scopeStack.push(new Set());
+            } else if (ch === '}') {
+                if (scopeStack.length > 1) scopeStack.pop();
+            }
+        }
+        let match: RegExpExecArray | null;
+        while ((match = varDecl.exec(clean)) !== null) {
+            scopeStack[scopeStack.length - 1].add(match[1]);
+        }
+        varDecl.lastIndex = 0;
+        while ((match = varDeclNoValue.exec(clean)) !== null) {
+            scopeStack[scopeStack.length - 1].add(match[1]);
+        }
+        varDeclNoValue.lastIndex = 0;
+        while ((match = foreachDecl.exec(clean)) !== null) {
+            scopeStack[scopeStack.length - 1].add(match[1]);
+        }
+        foreachDecl.lastIndex = 0;
+        const current = new Set<string>(nameSets.variableNames);
+        for (const set of scopeStack) set.forEach(v => current.add(v));
+        varsPerLine[i] = current;
+    }
+
     const atomList = atomize(text);
     for (let i = 0; i < atomList.length; i++) {
         const checkAtom = atomList[i];
         if (checkAtom.type === AtomType.LObject) {
             const ident = checkAtom.value;
-            if (!nameSets.typeNames.has(ident) && 
-            !nameSets.functionNames.has(ident) && 
-            !nameSets.variableNames.has(ident) && 
+            const inScope = checkAtom.line < varsPerLine.length ? varsPerLine[checkAtom.line].has(ident) : nameSets.variableNames.has(ident);
+            if (!nameSets.typeNames.has(ident) &&
+            !nameSets.functionNames.has(ident) &&
+            !inScope &&
             !nameSets.nameSpaceNames.has(ident) &&
             deprecated.indexOf(ident) === -1 &&
             Keywords.indexOf(ident) === -1 &&
