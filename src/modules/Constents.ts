@@ -11,6 +11,7 @@ export const RETURN_TYPES: string[] = [
     'short',
     'long',
     'generic',
+    'vector',
 ];
 
 export const TYPES: Type[] = RETURN_TYPES.map((type: string) => ({
