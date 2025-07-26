@@ -103,6 +103,7 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
 
                 const varDecl = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s*([\w\d_]+)\s*=.*/g;
                 const varDeclNoValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\),=])/g;
+                const foreachDecl = /foreach\s+([\w\d_]+)\s+in/g;
                 const scopeStack: Set<string>[] = [new Set()];
 
 
@@ -428,6 +429,10 @@ export class DocumentSemanticTokenProvidor implements vscode.DocumentSemanticTok
                                 scopeStack[scopeStack.length - 1].add(match[1]);
                         }
                         varDeclNoValue.lastIndex = 0;
+                        while ((match = foreachDecl.exec(clean)) !== null) {
+                                scopeStack[scopeStack.length - 1].add(match[1]);
+                        }
+                        foreachDecl.lastIndex = 0;
                         const currentVars = new Set<string>(variableNames);
                         for (const set of scopeStack) set.forEach(v => currentVars.add(v));
 

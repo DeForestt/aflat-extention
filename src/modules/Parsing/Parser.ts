@@ -265,18 +265,24 @@ const getSets = async (text : string, NameSetsMemo : Set<string>, moduleName : s
 		// match a declaration that looks 
 
 		// match a variable declaration without a value
-		const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
+                const variableDeclarationWithoutValue = /(?:any|let|int|adr|byte|char|float|bool|short|long|generic)\s*(?:\[\d+\])*\s*(?:<.*>)?\s+([\w\d_]+)\s*(?:[;\]\)\,=])/;
         testLine = line;
         shift = 0;
         match = testLine.match(variableDeclarationWithoutValue);
         while (match) {
             if (match){
                 const identifier = match[1];
-				variableNames.add(identifier);
+                                variableNames.add(identifier);
                 testLine = testLine.substring(testLine.indexOf(identifier) + identifier.length);
                 shift = testLine.indexOf(identifier) + shift + identifier.length;
                 match = testLine.match(variableDeclarationWithoutValue);
             }
+        }
+
+                const foreachDeclaration = /foreach\s+([\w\d_]+)\s+in/;
+        const foreachMatch = line.match(foreachDeclaration);
+        if (foreachMatch) {
+            variableNames.add(foreachMatch[1]);
         }
 
 		// match 'under'
