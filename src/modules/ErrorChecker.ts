@@ -7,7 +7,7 @@ const Keywords = [ 'int', 'adr', 'bool', 'byte', 'char', 'float', 'short', 'long
     'my', 'class', 'struct', 'public', 'private', 'NULL', 'true', 'false', 'contract',
     'import', 'from', 'under', 'export', 'delete', 'const', 'mutable', 'enum', 'let', 'safe', 'dynamic',
     'break', 'continue', 'void', 'any', 'padantic', 'fn', 'Apply', 'transform', 'immutable', 'match',
-    'union', 'types', 'Self', "in"];
+    'union', 'types', 'Self', "in", "when", "match", "has", "missing", "is", "not"];
 const deprecated = ['struct']
 
 export const GetErrors = (doc : vscode.TextDocument, errorList : vscode.DiagnosticCollection, nameSets : NameSets): void => {

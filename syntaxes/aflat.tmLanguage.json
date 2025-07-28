@@ -127,7 +127,7 @@
 			"patterns": [
 				{
 					"name":"meta.preprocessor",
-					"match": "\\b(needs|root)\\b"
+					"match": "\\b(needs|root|has|missing|is|not|when|match)\\b"
 				},
 				{
 					"name":"meta.preprocessor.string",
