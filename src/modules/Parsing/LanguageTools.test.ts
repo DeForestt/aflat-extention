@@ -91,6 +91,24 @@ describe('LanguageTools', () => {
             const exportsOnly = extractFunction(mockText, 'notFound', 'Test', true);
             expect(exportsOnly.error).toEqual('Function notFound not found');
         });
+
+        it('should handle when clauses in functions', () => {
+            const whenText = 'int foo(int a) when a > 0 { return a; };';
+            const res = extractFunction(whenText, 'foo', 'Test');
+            expect(res.data).toEqual({
+                ident: 'foo',
+                returnType: 'int',
+                moduleName: 'Test',
+                params: ['int a'],
+                doc: undefined,
+            });
+        });
+
+        it('should error on empty when clause', () => {
+            const invalidWhen = 'int foo() when { return 0; };';
+            const res = extractFunction(invalidWhen, 'foo', 'Test');
+            expect(res.error).toEqual('Empty when clause');
+        });
     });
 
     describe('extractClassText', () => {
@@ -131,6 +149,12 @@ describe('LanguageTools', () => {
             // should have 2 functions
             const data = res.data as Signature[];
             expect(data.length).toBe(2);
+        });
+
+        it('should error when a function has an empty when clause', () => {
+            const badText = 'export int foo() when { return 0; };';
+            const res = extractFunctions(badText, 'Test', true);
+            expect(res.error).toEqual('Empty when clause');
         });
     });
 
