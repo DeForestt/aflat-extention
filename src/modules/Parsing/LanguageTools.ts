@@ -23,6 +23,17 @@ const removeSingleQuotedStrings  = (line: string): string => {
     // Replace all double quoted strings with an empty string
     return line.replace(regex, '');
 }
+
+const checkWhenClause = (line: string): string | undefined => {
+    const whenMatch = line.match(/\)\s*when\s*([^\{]*)/);
+    if (whenMatch) {
+        const clause = whenMatch[1].trim();
+        if (clause === '') {
+            return 'Empty when clause';
+        }
+    }
+    return undefined;
+}
   
 
 /*
@@ -65,7 +76,12 @@ const extractFunction = (text: string, name: string, moduleName: string, exports
             args.forEach((arg, i) => {
                 args[i] = arg.trim();
             });
-            
+
+            const whenError = checkWhenClause(line);
+            if (whenError) {
+                return {error: whenError};
+            }
+
             // check the previous lines for docstrings
             let docstring = '';
             if (lines.indexOf(line) > 0) {
@@ -249,6 +265,11 @@ const extractFunctions = (text: string, moduleName: string, exportsOnly?: boolea
         args.forEach((arg, i) => {
             args[i] = arg.trim();
         });
+
+        const whenError = checkWhenClause(line);
+        if (whenError) {
+            return {error: whenError};
+        }
 
         // check the previous lines for docstrings
         let docstring = '';
